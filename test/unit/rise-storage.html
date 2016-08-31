@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <title>rise-storage</title>
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.min.js"></script>
+  <script src="../../../web-component-tester/browser.js"></script>
+
+  <link rel="import" href="../../rise-storage.html">
+</head>
+<body>
+  <rise-storage id="noCompany"></rise-storage>
+  <rise-storage id="bucket" companyId="abc123"></rise-storage>
+  <rise-storage id="folder" companyId="abc123" folder="images"></rise-storage>
+  <rise-storage id="folder-testing" companyId="abc123" folder="images" env="test"></rise-storage>
+  <rise-storage id="file-folder" companyId="abc123" folder="images" fileName="home.jpg"></rise-storage>
+  <rise-storage id="file-bucket" companyId="abc123" fileName="home.jpg"></rise-storage>
+  <rise-storage id="content-type" companyId="abc123" folder="images" contentType="image/jpeg image/png"></rise-storage>
+  <rise-storage id="invalid-folder" companyId="abc123" folder="images" fileType="video"></rise-storage>
+
+  <script src="../js/rise-storage-data.js"></script>
+  <script>
+    suite("rise-storage", function() {
+      var responded,
+        listener,
+        clock,
+        noCompany = document.querySelector("#noCompany"),
+        bucket = document.querySelector("#bucket"),
+        folder = document.querySelector("#folder"),
+        invalidFolder = document.querySelector("#invalid-folder"),
+        folderTesting = document.querySelector("#folder-testing"),
+        fileFolder = document.querySelector("#file-folder"),
+        fileBucket = document.querySelector("#file-bucket"),
+        contentType = document.querySelector("#content-type"),
+        suffix = "?alt=media";
+
+      suiteSetup(function() {
+        xhr = sinon.useFakeXMLHttpRequest();
+
+        xhr.onCreate = function (xhr) {
+          requests.push(xhr);
+        };
+
+        clock = sinon.useFakeTimers();
+      });
+
+      suiteTeardown(function() {
+        xhr.restore();
+        clock.restore();
+      });
+
+      setup(function() {
+        requests = [];
+        responded = false;
+      });
+
+      suite("ready", function() {
+        test("should set the number of supported image types", function() {
+          bucket.ready();
+          assert.equal(bucket._images.length, 6);
+        });
+
+        test("should set the number of supported video types", function() {
+          bucket.ready();
+          assert.equal(bucket._videos.length, 3);
+        });
+
+        test("should parse the contentType attribute", function() {
+          contentType.ready();
+          assert.equal(contentType._contentTypes.length, 2);
+        });
+      });
+
+      suite("_computeStorageUrl", function() {
+        test("should correctly set Storage request URL if no companyId attribute is specified", function() {
+          noCompany._computeStorageUrl();
+          assert.equal(noCompany.$.storage.url, undefined);
+        });
+
+        test("should correctly set Storage request URL for a folder", function() {
+          folder._computeStorageUrl();
+          assert.equal(folder.$.storage.url, "https://storage-dot-rvaserver2.appspot.com/_ah/api/storage/v0.01/files?companyId=abc123&folder=images/");
+        });
+
+        test("should correctly set Storage request URL for a folder in the testing environment", function() {
+          folderTesting._computeStorageUrl();
+          assert.equal(folderTesting.$.storage.url, "https://storage-dot-rvacore-test.appspot.com/_ah/api/storage/v0.01/files?companyId=abc123&folder=images/");
+        });
+
+        test("should correctly set Storage request URL for a file in a folder", function() {
+          fileFolder._computeStorageUrl();
+          assert.equal(fileFolder.$.storage.url, "https://storage-dot-rvaserver2.appspot.com/_ah/api/storage/v0.01/files?companyId=abc123&file=images/home.jpg");
+        });
+
+        test("should correctly set Storage request URL for a bucket", function() {
+          bucket._computeStorageUrl();
+          assert.equal(bucket.$.storage.url, "https://storage-dot-rvaserver2.appspot.com/_ah/api/storage/v0.01/files?companyId=abc123");
+        });
+
+        test("should correctly set Storage request URL for a file in a bucket", function() {
+          fileBucket._computeStorageUrl();
+          assert.equal(fileBucket.$.storage.url, "https://storage-dot-rvaserver2.appspot.com/_ah/api/storage/v0.01/files?companyId=abc123&file=home.jpg");
+        });
+
+        test("should correctly set Storage request URL for a folder that ends with a /", function() {
+          folder.setAttribute("folder", "images/");
+          folder._computeStorageUrl();
+          assert.equal(folder.$.storage.url, "https://storage-dot-rvaserver2.appspot.com/_ah/api/storage/v0.01/files?companyId=abc123&folder=images%2F");
+        });
+      });
+
+      suite("_handleStorageError", function() {
+        var resp = {
+          "request": {
+            "status": 404,
+            "statusText": "An error occurred"
+          }
+        }, errorSpy = null;
+
+        setup(function() {
+          errorSpy = sinon.spy();
+          fileBucket._reset();
+          fileBucket.addEventListener("rise-storage-error", errorSpy);
+          folder._reset();
+          folder.addEventListener("rise-storage-error", errorSpy);
+        });
+
+        teardown(function(){
+          fileBucket.removeEventListener("rise-storage-error", errorSpy);
+          folder.removeEventListener("rise-storage-error", errorSpy);
+        });
+
+        test("should retry storage request if the first request fails", function() {
+          var loadStorageStub = sinon.stub(fileBucket, "_loadStorage", function(){});
+
+          fileBucket._handleStorageError({}, resp);
+          assert(loadStorageStub.calledOnce);
+        });
+
+        test("should fire rise-storage-error if Rise Cache is not running", function() {
+          fileBucket._hasAttemptedSecondStorageRequest = true;
+          fileBucket._handleStorageError({}, resp);
+          assert(errorSpy.calledOnce);
+        });
+
+        test("should fire rise-storage-error if Rise Cache is running but file previously determined to be throttled", function() {
+          fileBucket._isCacheRunning = true;
+          fileBucket._isLoading = false;
+          fileBucket._fileThrottled = true;
+          fileBucket._hasAttemptedSecondStorageRequest = true;
+
+          fileBucket._handleStorageError({}, resp);
+          assert(errorSpy.calledOnce);
+        });
+
+        test("should fire rise-storage-error if Rise Cache is running but no previous folder files to request", function() {
+          fileBucket._isCacheRunning = true;
+          fileBucket._isLoading = false;
+          fileBucket._isFile = false;
+          fileBucket._hasAttemptedSecondStorageRequest = true;
+
+          fileBucket._handleStorageError({}, resp);
+          assert(errorSpy.calledOnce);
+        });
+
+        test("should bypass firing error and proceed with getting file from Rise Cache", function() {
+          var getFileStub = sinon.stub(fileBucket, "_getFileFromCache", function(){});
+
+          fileBucket._isCacheRunning = true;
+          fileBucket._isLoading = false;
+          fileBucket._isFile = true;
+          fileBucket._hasAttemptedSecondStorageRequest = true;
+
+          fileBucket._handleStorageError({}, resp);
+          assert(getFileStub.calledOnce);
+          assert(errorSpy.notCalled);
+
+          fileBucket._getFileFromCache.restore();
+        });
+
+        test("should bypass firing error and proceed with getting folder files from Rise Cache", function() {
+          var requestFolderStub = sinon.stub(folder, "_requestCacheFolderFile", function(){});
+
+          folder._isCacheRunning = true;
+          folder._isLoading = false;
+          folder._isFile = false;
+          folder._folderFilesToRequest = ["", "", ""];
+          folder._hasAttemptedSecondStorageRequest = true;
+
+          folder._handleStorageError({}, resp);
+          assert(requestFolderStub.calledOnce);
+          assert(errorSpy.notCalled);
+
+          folder._requestCacheFolderFile.restore();
+        });
+      });
+
+      suite("_handleStorageFile", function() {
+        suite("bucket file", function() {
+          var url = bucketImage.files[0].selfLink;
+
+          suiteSetup(function () {
+            fileBucket._reset();
+          });
+
+          teardown(function () {
+            fileBucket.removeEventListener("rise-storage-response", listener);
+          });
+
+          test("should return the correct URL for a specific file in a bucket", function(done) {
+            listener = function(response) {
+              responded = true;
+              assert.equal(response.detail.name, "home.jpg");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg?alt=media");
+            };
+
+            fileBucket.addEventListener("rise-storage-response", listener);
+            fileBucket._fileUrl = url + suffix;
+            fileBucket._handleStorageFile(bucketImage);
+
+            assert.isTrue(responded);
+            done();
+          });
+
+          test("should fire rise-storage-response if the file hasn't changed", function(done) {
+            listener = function(response) {
+              responded = true;
+              assert.isFalse(response.detail.changed);
+              fileBucket.removeEventListener("rise-storage-response", listener);
+            };
+
+            fileBucket.addEventListener("rise-storage-response", listener);
+            fileBucket._handleStorageFile(bucketImage);
+
+            assert.isTrue(responded);
+            done();
+          });
+
+          test("should return a new URL if the file has changed", function(done) {
+            listener = function(response) {
+              responded = true;
+              assert.isTrue(response.detail.changed);
+              assert.equal(response.detail.name, "home.jpg");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg?alt=media&cb=0");
+              fileBucket.removeEventListener("rise-storage-response", listener);
+            };
+
+            bucketImage.files[0].etag = "new";
+            fileBucket.addEventListener("rise-storage-response", listener);
+            fileBucket._handleStorageFile(bucketImage);
+
+            assert.isTrue(responded);
+            bucketImage.etag = "COjLvarr/cQCEAE=";
+            done();
+          });
+
+          fileBucket._files = [];
+        });
+
+        suite("folder file", function() {
+          var url = folderImage.files[0].selfLink;
+
+          suiteSetup(function () {
+            fileFolder._reset();
+          });
+
+          teardown(function() {
+            fileFolder.removeEventListener("rise-storage-response", listener);
+          });
+
+          test("should return the correct URL for a specific file in a bucket", function(done) {
+            listener = function(response) {
+              responded = true;
+              assert.equal(response.detail.name, "images/home.jpg");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media");
+            };
+
+            fileFolder.addEventListener("rise-storage-response", listener);
+            fileFolder._fileUrl = url + suffix;
+            fileFolder._handleStorageFile(folderImage);
+
+            assert.isTrue(responded);
+            done();
+          });
+
+          test("should fire rise-storage-response if the file hasn't changed", function(done) {
+            listener = function(response) {
+              responded = true;
+              assert.isFalse(response.detail.changed);
+            };
+
+            fileFolder.addEventListener("rise-storage-response", listener);
+            fileFolder._handleStorageFile(folderImage);
+
+            assert.isTrue(responded);
+            done();
+          });
+
+          test("should return a new URL if the file has changed", function(done) {
+            listener = function(response) {
+              responded = true;
+              assert.isTrue(response.detail.changed);
+              assert.equal(response.detail.name, "images/home.jpg");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&cb=0");
+            };
+
+            folderImage.files[0].etag = "new";
+            fileFolder.addEventListener("rise-storage-response", listener);
+            fileFolder._handleStorageFile(folderImage);
+
+            assert.isTrue(responded);
+            folderImage.files[0].etag = "COjLvarr/cQCEAE=";
+            done();
+          });
+
+          fileFolder._files = [];
+        });
+      });
+
+      suite("_handleStorageFolder", function() {
+        var localImages;
+
+        suiteSetup(function () {
+          folder._reset();
+          invalidFolder._reset();
+          localImages = JSON.parse(JSON.stringify(images));
+        });
+
+        teardown(function() {
+          images = localImages;
+        });
+
+        test("should return the correct URLs for files in a folder", function(done) {
+          var files = [];
+
+          listener = function(response) {
+            files.push(response.detail);
+
+            if(files.length === 3) {
+              responded = true;
+              assert.equal(files[0].name, "images/home.jpg");
+              assert.equal(files[1].name, "images/circle.png");
+              assert.equal(files[2].name, "images/my-image.bmp");
+              assert.equal(files[0].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media");
+              assert.equal(files[1].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media");
+              assert.equal(files[2].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media");
+            }
+          };
+
+          folder.addEventListener("rise-storage-response", listener);
+          folder._handleStorageFolder(images);
+
+          assert.isTrue(responded);
+          done();
+        });
+
+        test("should return the same URLs if none of the files have changed", function(done) {
+          var files = [];
+
+          listener = function(response) {
+            files.push(response.detail);
+
+            if(files.length === 3) {
+              responded = true;
+              assert.equal(files[0].name, "images/home.jpg");
+              assert.equal(files[1].name, "images/circle.png");
+              assert.equal(files[2].name, "images/my-image.bmp");
+              assert.equal(files[0].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media");
+              assert.equal(files[1].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media");
+              assert.equal(files[2].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media");
+            }
+          };
+
+          folder.addEventListener("rise-storage-response", listener);
+          folder._handleStorageFolder(images);
+
+          assert.isTrue(responded);
+          done();
+        });
+
+        test("should return new URL if a file has changed", function(done) {
+          listener = function(response) {
+            if (response.detail.changed) {
+              responded = true;
+              assert.equal(response.detail.name, "images/circle.png");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&cb=0");
+            }
+          };
+
+          images.files[2].etag = "new";
+          folder.addEventListener("rise-storage-response", listener);
+          folder._handleStorageFolder(images);
+
+          assert.isTrue(responded);
+          done();
+        });
+
+        test("should return URL of a file that has been added to a folder", function(done) {
+          listener = function(response) {
+            if (response.detail.added) {
+              responded = true;
+              assert.equal(response.detail.name, "images/golf.svg");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media&cb=0");
+            }
+          };
+
+          images.files.push({
+            "name": "images/golf.svg",
+            "contentType": "image/svg+xml",
+            "updated": "2015-01-30T08:19:09.263Z",
+            "selfLink": "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg",
+            "etag": "CPjC1qHc7MQCEAE="
+          });
+
+          folder.addEventListener("rise-storage-response", listener);
+          folder._handleStorageFolder(images);
+
+          assert.isTrue(responded);
+          done();
+        });
+
+        test("should return URL of a file that has been removed from a folder", function(done) {
+          listener = function(response) {
+            if (response.detail.deleted) {
+              responded = true;
+              assert.equal(response.detail.name, "images/golf.svg");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media&cb=0");
+            }
+          };
+
+          images.files.pop();
+          folder.addEventListener("rise-storage-response", listener);
+          folder._handleStorageFolder(images);
+
+          assert.isTrue(responded);
+          images.files[2].etag = "CMiEudSn2MMCEAs=";
+          done();
+        });
+
+        test("should fire rise-storage-folder-invalid if no valid files exist in folder", function() {
+          var errorSpy = sinon.spy();
+
+          invalidFolder.addEventListener("rise-storage-folder-invalid", errorSpy);
+          invalidFolder._handleStorageFolder(images);
+
+          assert(errorSpy.calledOnce);
+        });
+      });
+
+      suite("_isEmptyFolder", function() {
+        test("should return false for a file in the root of the bucket", function() {
+          assert.equal(fileBucket._isEmptyFolder(bucketImage), false);
+        });
+
+        test("should return false for a file in a folder", function() {
+          assert.equal(fileFolder._isEmptyFolder(folderImage), false);
+        });
+
+        test("should return false for a folder that has files", function() {
+          assert.equal(folder._isEmptyFolder(images), false);
+        });
+
+        test("should return false if the folder does not exist", function() {
+          assert.equal(folder._isEmptyFolder(noFolder), false);
+        });
+
+        test("should return true for an empty folder", function() {
+          assert.equal(folder._isEmptyFolder(emptyFolder), true);
+        });
+      });
+
+      suite("_noFolderExists", function() {
+        test("should return false for a file in the root of the bucket", function() {
+          assert.equal(fileBucket._noFolderExists(bucketImage), false);
+        });
+
+        test("should return false for a file in a folder", function() {
+          assert.equal(fileFolder._noFolderExists(folderImage), false);
+        });
+
+        test("should return false for a folder that has files", function() {
+          assert.equal(folder._noFolderExists(images), false);
+        });
+
+        test("should return false for an empty folder", function() {
+          assert.equal(folder._noFolderExists(emptyFolder), false);
+        });
+
+        test("should return true if the folder does not exist", function() {
+          assert.equal(folder._noFolderExists(noFolder), true);
+        });
+      });
+
+      suite("_isThrottled", function() {
+        var resp;
+
+        setup(function() {
+          resp = {};
+        });
+
+        test("should return true if a file has been throttled", function() {
+          resp.files = [{ isThrottled: true }];
+
+          assert.equal(fileBucket._isThrottled(resp, 0), true);
+        });
+
+        test("should return false if a file has not been throttled", function() {
+          resp.files = [{ isThrottled: false }];
+
+          assert.equal(fileBucket._isThrottled(resp, 0), false);
+        });
+
+        test("should return false if response not passed as parameter", function() {
+          assert.equal(fileBucket._isThrottled(null, 0), false);
+        });
+
+        test("should return false if response has no files property", function() {
+          assert.equal(fileBucket._isThrottled(resp, 0), false);
+        });
+
+        test("should return false if response has no file at the corresponding index", function() {
+          resp.files = [];
+
+          assert.equal(fileBucket._isThrottled(resp, 0), false);
+        });
+
+        test("should return false if file has no isThrottled property", function() {
+          resp.files = [{}];
+
+          assert.equal(fileBucket._isThrottled(resp, 0), false);
+        });
+      });
+
+      suite("_setIsFile", function() {
+        var isFile;
+
+        test("should correctly set _isFile for a file in the root of the bucket", function() {
+          fileBucket._setIsFile(bucketImage);
+          assert.equal(fileBucket._isFile, true);
+        });
+
+        test("should correctly set _isFile for a file in a folder", function() {
+          fileFolder._setIsFile(folderImage);
+          assert.equal(fileFolder._isFile, true);
+        });
+
+        test("should correctly set _isFile for a folder", function() {
+          isFile = folder._setIsFile(images);
+          assert.equal(folder._isFile, false);
+        });
+      });
+
+      suite("_isAPIError", function() {
+        test("should return true for an api error response", function() {
+          assert.isTrue(fileBucket._isAPIError(apiError));
+        });
+
+        test("should return false when not an api error response", function() {
+          assert.isFalse(fileBucket._isAPIError(bucketImage));
+        });
+
+        test("should retry request when there is an api error response on the first request", function() {
+          var resp = {
+            "response" : {
+              "result": false,
+              "code": 500,
+              "message": "Could not retrieve Bucket Items"
+            }
+          }
+          var handleStorageErrorWithRetryStub = sinon.stub(fileBucket, "_handleStorageErrorWithRetry", function(){});
+
+          fileBucket._processStorageResponse({},resp);
+          assert(handleStorageErrorWithRetryStub.calledOnce);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
