@@ -1,0 +1,79 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+
+<script src="../underscore/underscore.js"></script>
+
+<dom-module id="rise-storage">
+  <template>
+    <iron-ajax id="ping"
+               url="//localhost:9494"
+               handle-as="json"
+               on-response="_handlePingResponse"
+               on-error="_handlePingError"
+               verbose="true">
+    </iron-ajax>
+  </template>
+</dom-module>
+
+<script>
+  /* global Polymer */
+  /*jshint newcap: false */
+  Polymer({
+    is: "rise-storage",
+    properties: {},
+
+    /**
+     * Whether or not Rise Cache V2 is running.
+     *
+     * @property _isCacheRunning
+     * @type boolean
+     * @default false
+     */
+    _isCacheRunning: false,
+
+    /**
+     * Whether or not a response has been received from the ping request.
+     *
+     * @property _pingReceived
+     * @type boolean
+     * @default false
+     */
+    _pingReceived: false,
+
+    /************************************** INITIALIZATION **************************************/
+
+    /**
+     * An instance of the element was inserted into the DOM.
+     */
+    attached: function() {
+      this.$.ping.generateRequest();
+    },
+
+    /**
+     * Fires when a response is received from the ping request.
+     */
+    _handlePingResponse: function(e, resp) {
+      this._isCacheRunning = resp.response && resp.response !== "";
+      this._pingReceived = true;
+
+      if (this._isCacheRunning) {
+        console.log("[rise-storage v2] Rise Cache V2 running", resp.response);
+      }
+      else {
+        console.log("[rise-storage v2] Rise Cache V2 not running");
+      }
+    },
+
+    /**
+     * Fires when an error is received from the ping request.
+     */
+    _handlePingError: function() {
+      this._isCacheRunning = false;
+      this._pingReceived = true;
+
+      console.log("[rise-storage v2] Ping Error");
+    }
+
+  });
+</script>
+

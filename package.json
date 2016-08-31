@@ -1,0 +1,37 @@
+{
+  "name": "rise-storage",
+  "version": "1.0.0",
+  "description": "Rise Vision web component for retrieving files from Rise Storage",
+  "scripts": {
+    "test": "gulp test",
+    "build": "gulp build"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Rise-Vision/rise-storage.git"
+  },
+  "keywords": [
+    "polymer",
+    "web-components"
+  ],
+  "author": "Rise Vision",
+  "license": "GPLv3",
+  "bugs": {
+    "url": "https://github.com/Rise-Vision/rise-storage/issues"
+  },
+  "homepage": "https://github.com/Rise-Vision/rise-storage",
+  "devDependencies": {
+    "colors": "~1.1.0",
+    "del": "~1.1.1",
+    "gulp": "~3.8.10",
+    "gulp-bower": "~0.0.10",
+    "gulp-bump": "~0.2.0",
+    "gulp-jshint": "~1.10.0",
+    "jshint-stylish": "~1.0.2",
+    "run-sequence": "~1.1.0",
+    "web-component-tester": "*"
+  }
+}
