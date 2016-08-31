@@ -1,0 +1,28 @@
+{
+  "name": "rise-storage",
+  "version": "1.0.0",
+  "authors": [
+    "Rise Vision"
+  ],
+  "description": "Rise Vision web component for retrieving files from Rise Storage",
+  "main": "rise-storage.html",
+  "keywords": [
+    "polymer",
+    "web-components"
+  ],
+  "license": "GPLv3",
+  "homepage": "https://github.com/Rise-Vision/rise-storage",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "test"
+  ],
+  "dependencies": {
+    "iron-ajax": "PolymerElements/iron-ajax#^1.0.0",
+    "polymer": "Polymer/polymer#^1.0.0",
+    "underscore": "~1.8.3"
+  },
+  "devDependencies": {
+    "web-component-tester": "*"
+  }
+}

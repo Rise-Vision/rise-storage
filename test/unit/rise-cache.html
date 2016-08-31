@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <title>rise-storage</title>
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.min.js"></script>
+  <script src="../../../web-component-tester/browser.js"></script>
+
+  <link rel="import" href="../../rise-storage.html">
+</head>
+<body>
+<rise-storage id="cache"></rise-storage>
+
+<script>
+  suite("rise-storage", function() {
+    var cacheFile = document.querySelector("#cache");
+
+    suite("_handlePingResponse", function() {
+      test("should correctly set _isCacheRunning and _pingReceived if ping response is an empty string", function() {
+
+        cacheFile._handlePingResponse({}, { "response": "" });
+        assert.equal(cacheFile._isCacheRunning, false);
+        assert.equal(cacheFile._pingReceived, true);
+      });
+
+      test("should correctly set _isCacheRunning and _pingReceived if ping response is not an empty string", function() {
+        cacheFile._handlePingResponse({}, { "response": {name: "rise-cache-v2", version: "1.0.0"} });
+        assert.equal(cacheFile._isCacheRunning, true);
+        assert.equal(cacheFile._pingReceived, true);
+      });
+    });
+
+    suite("_handlePingError", function() {
+      test("should correctly set _isCacheRunning and _pingReceived if a ping error occurs", function() {
+        var resp = {
+            "xhr": {
+              "status": 404,
+              "statusText": "An error occurred"
+            }
+          };
+
+        cacheFile._handlePingError({}, resp);
+        assert.equal(cacheFile._isCacheRunning, false);
+        assert.equal(cacheFile._pingReceived, true);
+      });
+    });
+
+  });
+</script>
+</body>
+</html>
