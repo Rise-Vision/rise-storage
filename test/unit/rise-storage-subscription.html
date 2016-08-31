@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <title>rise-storage</title>
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.min.js"></script>
+  <script src="../../../web-component-tester/browser.js"></script>
+
+  <link rel="import" href="../../rise-storage.html">
+</head>
+<body>
+<rise-storage id="file-bucket" companyId="abc123" fileName="home.jpg"></rise-storage>
+<rise-storage id="file-bucket-test" companyId="abc123" fileName="home.jpg" env="test"></rise-storage>
+
+<script src="../js/rise-storage-data.js"></script>
+<script>
+suite("rise-storage", function() {
+  var responded,
+    listener,
+    fileBucket = document.querySelector("#file-bucket"),
+    fileBucketTest = document.querySelector("#file-bucket-test");
+
+
+  suiteSetup(function() {
+    xhr = sinon.useFakeXMLHttpRequest();
+
+    xhr.onCreate = function (xhr) {
+      requests.push(xhr);
+    };
+
+    clock = sinon.useFakeTimers();
+    sessionStorage.clear();
+  });
+
+  suiteTeardown(function() {
+    xhr.restore();
+    clock.restore();
+  });
+
+  setup(function() {
+    requests = [];
+    responded = false;
+  });
+
+  suite("_computeStorageUrl", function() {
+    test("should correctly set Store request URL", function() {
+      fileBucket._getStorageSubscription();
+      assert.equal(fileBucket.$.storageSubscription.url, "https://store-dot-rvaserver2.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db");
+    });
+    
+    test("should correctly set Test Store request URL", function() {
+      fileBucketTest._getStorageSubscription();
+      assert.equal(fileBucketTest.$.storageSubscription.url, "https://store-dot-rvacore-test.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db");
+    });
+
+    test("should fire rise-storage-subscription-expired if subscription is expired", function(done) {
+      var startTimerSpy = sinon.spy(fileBucket, "_startTimer");
+      var expiredResponse = { response:
+            {"authorized":false,"expiry":null,"signatures":null,"error":{"message":"Subscription is not active."}}
+        };
+      var responded = false;
+      var listener = function() {
+        responded = true;
+        fileBucket.removeEventListener("rise-storage-subscription-expired", listener);
+      };
+
+      fileBucket.addEventListener("rise-storage-subscription-expired", listener);
+      fileBucket._handleStorageSubscriptionResponse( null, expiredResponse);
+
+      assert(startTimerSpy.calledOnce);
+      assert.isTrue(responded);
+
+      fileBucket._startTimer.restore();
+      done();
+    });
+
+    test("should not fire rise-storage-subscription-expired if subscription is not expired", function(done) {
+      var expiredResponse = { response:
+        {"authorized":true,"expiry":"2016-04-26T08:17:59.059+0000","signatures":null,"error":null}
+      };
+      var responded = false;
+      var listener = function() {
+        responded = true;
+        fileBucket.removeEventListener("rise-storage-subscription-expired", listener);
+      };
+
+      fileBucket.addEventListener("rise-storage-subscription-expired", listener);
+      fileBucket._handleStorageSubscriptionResponse( null, expiredResponse);
+
+      assert.isFalse(responded);
+      done();
+    });
+
+    test("should fire rise-storage-subscription-error if there is an error on the call to get subscription status", function(done) {
+      var startTimerSpy = sinon.spy(fileBucket, "_startTimer");
+      var responded = false;
+      var response = {
+          "xhr": {
+            "status": 404,
+            "statusText": "An error occurred"
+          }
+        },
+      listener = function() {
+        responded = true;
+        fileBucket.removeEventListener("rise-storage-subscription-error", listener);
+      };
+
+      fileBucket.addEventListener("rise-storage-subscription-error", listener);
+      fileBucket._handleStorageSubscriptionError( {}, response);
+      assert(startTimerSpy.calledOnce);
+      assert.isTrue(responded);
+
+      fileBucket._startTimer.restore();
+      done();
+    });
+  });
+});
+</script>
+</body>
+</html>
