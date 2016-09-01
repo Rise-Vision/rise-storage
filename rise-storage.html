@@ -939,6 +939,8 @@
         } else {
           lastModified = resp.xhr.getResponseHeader("Last-Modified");
           file.url = resp.xhr.responseURL;
+          this._totalCacheRequests = 0;
+
           // Fallback to browsers that does not support responseURL.
           if(!file.url){
             file.url = resp.xhr.getResponseHeader("Location");
