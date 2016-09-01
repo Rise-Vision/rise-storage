@@ -72,9 +72,9 @@
             assert.equal(files[0].name, "images%2Fhome.jpg");
             assert.equal(files[1].name, "images%2Fcircle.png");
             assert.equal(files[2].name, "images%2Fmy-image.bmp");
-            assert.equal(files[0].url, "//localhost:9494/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fhome.jpg%3Falt%3Dmedia");
-            assert.equal(files[1].url, "//localhost:9494/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fcircle.png%3Falt%3Dmedia");
-            assert.equal(files[2].url, "//localhost:9494/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fmy-image.bmp%3Falt%3Dmedia");
+            assert.equal(files[0].url, "//localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fhome.jpg%3Falt%3Dmedia");
+            assert.equal(files[1].url, "//localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fcircle.png%3Falt%3Dmedia");
+            assert.equal(files[2].url, "//localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fmy-image.bmp%3Falt%3Dmedia");
           }
         };
 
@@ -100,7 +100,7 @@
           if (response.detail.changed) {
             responded = true;
             assert.equal(response.detail.name, "images%2Fcircle.png");
-            assert.equal(response.detail.url, "//localhost:9494/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fcircle.png%3Falt%3Dmedia");
+            assert.equal(response.detail.url, "//localhost:9494/files/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fcircle.png%3Falt%3Dmedia");
           }
         };
 
@@ -117,7 +117,7 @@
           if (response.detail.added) {
             responded = true;
             assert.equal(response.detail.name, "images%2Fgolf.svg");
-            assert.equal(response.detail.url, "//localhost:9494/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
+            assert.equal(response.detail.url, "//localhost:9494/files/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
           }
         };
 
@@ -140,7 +140,7 @@
           if (response.detail.deleted) {
             responded = true;
             assert.equal(response.detail.name, "images%2Fgolf.svg");
-            assert.equal(response.detail.url, "//localhost:9494/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
+            assert.equal(response.detail.url, "//localhost:9494/files/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
             cacheFolder.removeEventListener("rise-storage-response", listener);
           }
         };
@@ -173,13 +173,13 @@
       test("should correctly set the cache URL when loading", function() {
         cacheFile._isLoading = true;
         cacheFile._getFileFromCache();
-        assert.equal(cacheFile._cacheUrl, "//localhost:9494/?url=http://url.to.my.file");
+        assert.equal(cacheFile._cacheUrl, "//localhost:9494/files/?url=http://url.to.my.file");
       });
 
       test("should correctly set the cache URL when not loading", function() {
         cacheFile._isLoading = false;
         cacheFile._getFileFromCache();
-        assert.equal(cacheFile._cacheUrl, "//localhost:9494/cb=0?url=http://url.to.my.file");
+        assert.equal(cacheFile._cacheUrl, "//localhost:9494/files/cb=0?url=http://url.to.my.file");
       });
     });
 
@@ -237,7 +237,7 @@
     suite("_handleCacheFile", function() {
 
       test("should get the file url from the xhr.responseURL", function(done) {
-        var url = "//localhost:9494/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia";
+        var url = "//localhost:9494/files/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia";
         var resp = {
           xhr: {
             responseURL: url,
@@ -255,7 +255,7 @@
           if (response.detail.added) {
             responded = true;
             assert.equal(response.detail.name, "images%2Fgolf.svg");
-            assert.equal(response.detail.url, "//localhost:9494/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
+            assert.equal(response.detail.url, "//localhost:9494/files/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
             cacheFile.removeEventListener("rise-storage-response", listener);
           }
         };
@@ -269,7 +269,7 @@
       });
 
       test("should fallback to get the file url from the 'Location' header attribute", function(done) {
-        var url = "//localhost:9494/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia";
+        var url = "//localhost:9494/files/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia";
         var resp = {
           xhr: {
             getResponseHeader: function (attribute) {
@@ -286,7 +286,7 @@
           if (response.detail.added) {
             responded = true;
             assert.equal(response.detail.name, "images%2Fgolf.svg");
-            assert.equal(response.detail.url, "//localhost:9494/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
+            assert.equal(response.detail.url, "//localhost:9494/files/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
             cacheFile.removeEventListener("rise-storage-response", listener);
           }
         };
@@ -300,7 +300,7 @@
       });
 
       test("should get the file url from the this._cacheUrl", function(done) {
-        var url = "//localhost:9494/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia";
+        var url = "//localhost:9494/files/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia";
         var resp = {
           xhr: {
             responseURL: null,
@@ -318,7 +318,7 @@
           if (response.detail.added) {
             responded = true;
             assert.equal(response.detail.name, "images%2Fgolf.svg");
-            assert.equal(response.detail.url, "//localhost:9494/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
+            assert.equal(response.detail.url, "//localhost:9494/files/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
             cacheFile.removeEventListener("rise-storage-response", listener);
           }
         };
@@ -336,7 +336,7 @@
     suite("_handleCacheFolder", function() {
 
       test("should fallback to get the file url from the 'Location' header attribute", function(done) {
-        var url = "//localhost:9494/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia";
+        var url = "//localhost:9494/files/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia";
         var resp = {
           xhr: {
             getResponseHeader: function (attribute) {
@@ -353,7 +353,7 @@
           if (response.detail.added) {
             responded = true;
             assert.equal(response.detail.name, "images%2Fgolf.svg");
-            assert.equal(response.detail.url, "//localhost:9494/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
+            assert.equal(response.detail.url, "//localhost:9494/files/cb=0?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
             cacheFolder.removeEventListener("rise-storage-response", listener);
           }
         };
