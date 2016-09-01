@@ -1,4 +1,4 @@
-var header = { "Content-Type": "text/json" },
+var header = { "Content-Type": "application/json" },
   images = {
     "result": true,
     "code": 200,

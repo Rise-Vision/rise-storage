@@ -34,8 +34,12 @@
       setup(function () {
         server = sinon.fakeServer.create();
         server.respondImmediately = true;
+
+        // Ping request
         server.respondWith("GET", "http://localhost:9494/ping?callback=_handlePingResponse",
           [200, cacheHeader, "running"]);
+
+        // Storage request
         server.respondWith("GET", "https://store-dot-rvaserver2.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db",
           [200, header, JSON.stringify(subscribedStatus)]);
 
@@ -173,6 +177,53 @@
 
           cacheFileFolder.addEventListener("rise-storage-file-throttled", responseHandler);
           server.respondWith([200, header, JSON.stringify(folderImage)]);
+          cacheFileFolder.go();
+        });
+
+      });
+
+      suite("cache requests", function() {
+        var spy;
+
+        setup(function () {
+          spy = sinon.spy(cacheFileFolder.$.cache, "generateRequest");
+
+          // Rise Cache request
+          server.respondWith("HEAD", /localhost/,
+            [202, header, JSON.stringify({ status: 202, message: "File is downloading" })]);
+          server.respondWith([200, header, JSON.stringify(folderImage)]);
+
+          clock.restore();
+        });
+
+        teardown(function() {
+          spy.restore();
+          clock.restore();
+        });
+
+        test("should fire 'rise-cache-file-unavailable' after 3 retries", function(done) {
+          responseHandler = function(response) {
+            assert(spy.calledThrice);
+
+            cacheFileFolder.removeEventListener("rise-cache-file-unavailable", responseHandler);
+            done();
+          };
+
+          // Delay this call until the cache retry timer has been set.
+          setTimeout(function() {
+            clock.tick(3000);
+            clock.restore(); // Need to set a real timeout.
+
+            // Retry timer has expired. Wait for next one to be set before expiring it as well.
+            setTimeout(function() {
+              clock.tick(3000);
+            }, 0);
+
+            clock = sinon.useFakeTimers();
+          }, 0);
+
+          clock = sinon.useFakeTimers();
+          cacheFileFolder.addEventListener("rise-cache-file-unavailable", responseHandler);
           cacheFileFolder.go();
         });
 

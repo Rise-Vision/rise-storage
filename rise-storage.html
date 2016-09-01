@@ -17,7 +17,7 @@
     <iron-ajax id="cache"
                method="{{_cacheRequestMethod}}"
                url="{{_cacheUrl}}"
-               handle-as="text"
+               handle-as="json"
                on-response="_handleCacheResponse"
                on-error="_handleCacheError"
                verbose="true">
