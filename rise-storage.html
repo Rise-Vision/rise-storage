@@ -224,9 +224,9 @@
      *
      * @property _baseCacheUrl
      * @type string
-     * @default "//localhost:9494/files/"
+     * @default "//localhost:9494"
      */
-    _baseCacheUrl: "//localhost:9494/files/",
+    _baseCacheUrl: "//localhost:9494",
 
     /**
      * Whether or not Rise Cache V2 is running.
@@ -730,7 +730,7 @@
               if (self._isLoading) {
                 // Construct URL.
                 if (self._isCacheRunning) {
-                  file.url = self._baseCacheUrl + "?url=" + encodeURIComponent(item.selfLink + suffix);
+                  file.url = self._baseCacheUrl + "/files/?url=" + encodeURIComponent(item.selfLink + suffix);
                 }
                 else if(!self._isOfflinePlayer()) {
                   file.url = item.selfLink + suffix;
@@ -750,7 +750,7 @@
               else {
                 // Construct URL.
                 if (self._isCacheRunning) {
-                  file.url = self._baseCacheUrl + "cb=" + new Date().getTime() + "?url=" + encodeURIComponent(item.selfLink + suffix);
+                  file.url = self._baseCacheUrl + "/files/cb=" + new Date().getTime() + "?url=" + encodeURIComponent(item.selfLink + suffix);
                 }
                 else if(!self._isOfflinePlayer()) {
                   file.url = item.selfLink + suffix + cb;
@@ -832,12 +832,12 @@
       this._hasAttemptedGetRequest = false;
 
       if (this._isLoading) {
-        this._cacheUrl = this._baseCacheUrl + "?url=" + this._fileUrl;
+        this._cacheUrl = this._baseCacheUrl + "/files/?url=" + this._fileUrl;
       }
       else {
         // Include a cache buster as this will be the URL that gets passed to the browser
         // if the file has changed.
-        this._cacheUrl = this._baseCacheUrl + "cb=" + new Date().getTime() + "?url=" + this._fileUrl;
+        this._cacheUrl = this._baseCacheUrl + "/files/cb=" + new Date().getTime() + "?url=" + this._fileUrl;
       }
 
       this.$.cache.generateRequest();
@@ -896,7 +896,7 @@
       this._hasAttemptedGetRequest = false;
 
       this._setFileUrl(item);
-      this._cacheUrl = this._baseCacheUrl + "cb=" + new Date().getTime() + "?url=" + this._fileUrl;
+      this._cacheUrl = this._baseCacheUrl + "/files/cb=" + new Date().getTime() + "?url=" + this._fileUrl;
       this.$.cache.generateRequest();
     },
 
