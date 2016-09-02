@@ -24,18 +24,22 @@
         responseHandler,
         cacheFile = document.querySelector("#cache-file"),
         cacheFileFolder = document.querySelector("#cache-file-folder"),
-        cacheHeader = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT", "Location": "//localhost:9494/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" },
-        cacheHeaderFolder = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT", "Location": "//localhost:9494/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" },
-        newCacheHeader = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "//localhost:9494/cb=0?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" };
-        newCacheHeaderFolder = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "//localhost:9494/cb=0?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" };
+        cacheHeader = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT", "Location": "//localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" },
+        cacheHeaderFolder = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT", "Location": "//localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" },
+        newCacheHeader = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "//localhost:9494/files/cb=0?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" };
+        newCacheHeaderFolder = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "//localhost:9494/files/cb=0?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" };
 
 
       // Runs for every test
       setup(function () {
         server = sinon.fakeServer.create();
         server.respondImmediately = true;
+
+        // Ping request
         server.respondWith("GET", "http://localhost:9494/ping?callback=_handlePingResponse",
           [200, cacheHeader, "running"]);
+
+        // Storage request
         server.respondWith("GET", "https://store-dot-rvaserver2.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db",
           [200, header, JSON.stringify(subscribedStatus)]);
 
@@ -62,7 +66,7 @@
         test("should return the correct URL for a specific file in a bucket", function(done) {
           responseHandler = function(response) {
             assert.equal(response.detail.name, "home.jpg");
-            assert.equal(response.detail.url, "//localhost:9494/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg");
+            assert.equal(response.detail.url, "//localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg");
             done();
           };
 
@@ -86,7 +90,7 @@
           responseHandler = function(response) {
             assert.isTrue(response.detail.changed);
             assert.equal(response.detail.name, "home.jpg");
-            assert.equal(response.detail.url, "//localhost:9494/cb=0?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg");
+            assert.equal(response.detail.url, "//localhost:9494/files/cb=0?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg");
             done();
           };
 
@@ -112,7 +116,7 @@
           responseHandler = function(response) {
             assert.isTrue(response.detail.added);
             assert.equal(response.detail.name, "images%2Fhome.jpg");
-            assert.equal(response.detail.url, "//localhost:9494/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg");
+            assert.equal(response.detail.url, "//localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg");
             done();
           };
 
@@ -136,7 +140,7 @@
           responseHandler = function(response) {
             assert.isTrue(response.detail.changed);
             assert.equal(response.detail.name, "images%2Fhome.jpg");
-            assert.equal(response.detail.url, "//localhost:9494/cb=0?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg");
+            assert.equal(response.detail.url, "//localhost:9494/files/cb=0?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg");
             done();
           };
 
@@ -173,6 +177,53 @@
 
           cacheFileFolder.addEventListener("rise-storage-file-throttled", responseHandler);
           server.respondWith([200, header, JSON.stringify(folderImage)]);
+          cacheFileFolder.go();
+        });
+
+      });
+
+      suite("cache requests", function() {
+        var spy;
+
+        setup(function () {
+          spy = sinon.spy(cacheFileFolder.$.cache, "generateRequest");
+
+          // Rise Cache request
+          server.respondWith("HEAD", /localhost/,
+            [202, header, JSON.stringify({ status: 202, message: "File is downloading" })]);
+          server.respondWith([200, header, JSON.stringify(folderImage)]);
+
+          clock.restore();
+        });
+
+        teardown(function() {
+          spy.restore();
+          clock.restore();
+        });
+
+        test("should fire 'rise-cache-file-unavailable' after 3 retries", function(done) {
+          responseHandler = function(response) {
+            assert(spy.calledThrice);
+
+            cacheFileFolder.removeEventListener("rise-cache-file-unavailable", responseHandler);
+            done();
+          };
+
+          // Delay this call until the cache retry timer has been set.
+          setTimeout(function() {
+            clock.tick(3000);
+            clock.restore(); // Need to set a real timeout.
+
+            // Retry timer has expired. Wait for next one to be set before expiring it as well.
+            setTimeout(function() {
+              clock.tick(3000);
+            }, 0);
+
+            clock = sinon.useFakeTimers();
+          }, 0);
+
+          clock = sinon.useFakeTimers();
+          cacheFileFolder.addEventListener("rise-cache-file-unavailable", responseHandler);
           cacheFileFolder.go();
         });
 
