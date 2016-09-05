@@ -243,7 +243,7 @@
               responded = true;
               assert.isTrue(response.detail.changed);
               assert.equal(response.detail.name, "home.jpg");
-              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg?alt=media&cb=0");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg?alt=media");
               fileBucket.removeEventListener("rise-storage-response", listener);
             };
 
@@ -303,7 +303,7 @@
               responded = true;
               assert.isTrue(response.detail.changed);
               assert.equal(response.detail.name, "images/home.jpg");
-              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&cb=0");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media");
             };
 
             folderImage.files[0].etag = "new";
@@ -385,7 +385,7 @@
             if (response.detail.changed) {
               responded = true;
               assert.equal(response.detail.name, "images/circle.png");
-              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&cb=0");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media");
             }
           };
 
@@ -402,7 +402,7 @@
             if (response.detail.added) {
               responded = true;
               assert.equal(response.detail.name, "images/golf.svg");
-              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media&cb=0");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media");
             }
           };
 
@@ -426,7 +426,7 @@
             if (response.detail.deleted) {
               responded = true;
               assert.equal(response.detail.name, "images/golf.svg");
-              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media&cb=0");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media");
             }
           };
 
