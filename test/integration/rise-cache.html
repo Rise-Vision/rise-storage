@@ -26,8 +26,8 @@
         cacheFileFolder = document.querySelector("#cache-file-folder"),
         cacheHeader = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT", "Location": "//localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" },
         cacheHeaderFolder = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT", "Location": "//localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" },
-        newCacheHeader = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "//localhost:9494/files/cb=0?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" };
-        newCacheHeaderFolder = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "//localhost:9494/files/cb=0?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" };
+        newCacheHeader = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" };
+        newCacheHeaderFolder = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" };
 
 
       // Runs for every test
@@ -90,7 +90,7 @@
           responseHandler = function(response) {
             assert.isTrue(response.detail.changed);
             assert.equal(response.detail.name, "home.jpg");
-            assert.equal(response.detail.url, "//localhost:9494/files/cb=0?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg");
+            assert.equal(response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg");
             done();
           };
 
@@ -140,7 +140,7 @@
           responseHandler = function(response) {
             assert.isTrue(response.detail.changed);
             assert.equal(response.detail.name, "images%2Fhome.jpg");
-            assert.equal(response.detail.url, "//localhost:9494/files/cb=0?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg");
+            assert.equal(response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg");
             done();
           };
 
