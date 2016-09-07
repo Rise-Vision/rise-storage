@@ -32,8 +32,7 @@
         fileFolder = document.querySelector("#file-folder"),
         fileType = document.querySelector("#file-type"),
         invalidFolder = document.querySelector("#folder-invalid"),
-        contentType = document.querySelector("#content-type"),
-        cacheHeader = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT" };
+        contentType = document.querySelector("#content-type");
 
       // Runs for every test
       setup(function () {
@@ -41,8 +40,8 @@
 
         server = sinon.fakeServer.create();
         server.respondImmediately = true;
-        server.respondWith("GET", "http://localhost:9494/ping?callback=_handlePingResponse",
-          [200, cacheHeader, ""]);
+        server.respondWith("GET", "http://localhost:9494",
+          [200, header, JSON.stringify(cachePingBody)]);
         server.respondWith("GET", "https://store-dot-rvaserver2.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db",
           [200, header, JSON.stringify(subscribedStatus)]);
       });
@@ -354,25 +353,6 @@
           done();
         });
 
-        test("should retry storage request after rise-storage-api-error is encountered", function(done) {
-          var timerSpy;
-
-          responseHandler = function(response) {
-            timerSpy = sinon.spy(file.$.ping, "generateRequest");
-
-            clock.tick(299999);
-            assert(timerSpy.notCalled);
-            clock.tick(300000);
-            assert(timerSpy.calledOnce);
-
-            done();
-          };
-
-          file.addEventListener("rise-storage-api-error", responseHandler);
-          server.respondWith([200, header, JSON.stringify(apiError)]);
-          file.go();
-        });
-
       });
 
       suite("rise-storage-empty-folder", function() {
@@ -638,27 +618,6 @@
           };
 
           folderImage.files[0].isThrottled = true;
-
-          fileFolder.addEventListener("rise-storage-file-throttled", responseHandler);
-          server.respondWith([200, header, JSON.stringify(folderImage)]);
-          fileFolder.go();
-        });
-
-        test("should make a request to Storage after 5 minutes to check if a file is still throttled", function(done) {
-          var timerSpy;
-
-          responseHandler = function(response) {
-            timerSpy = sinon.spy(fileFolder.$.ping, "generateRequest");
-
-            clock.tick(299999);
-            assert(timerSpy.notCalled);
-            clock.tick(300000);
-            assert(timerSpy.calledOnce);
-
-            fileFolder.removeEventListener("rise-storage-file-throttled", responseHandler);
-
-            done();
-          };
 
           fileFolder.addEventListener("rise-storage-file-throttled", responseHandler);
           server.respondWith([200, header, JSON.stringify(folderImage)]);

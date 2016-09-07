@@ -457,6 +457,10 @@
     suite("_startTimer", function() {
       var timerSpy;
 
+      teardown(function () {
+        if (timerSpy) { timerSpy.restore(); }
+      });
+
       test("should correctly set refresh interval", function() {
         cacheFolder.refresh = 10;
         cacheFolder._startTimer();
@@ -469,9 +473,21 @@
         assert.equal(cacheFolder.refresh, 5);
       });
 
+      test("should not execute any timer if Rise Cache is not running", function() {
+        timerSpy = sinon.spy(cacheFile.$.ping, "generateRequest");
+
+        cacheFile._isCacheRunning = false;
+        cacheFile.refresh = 5;
+        cacheFile._startTimer();
+
+        clock.tick(300000);
+        assert.equal(timerSpy.callCount, 0);
+      });
+
       test("should check for changes to a file", function() {
         timerSpy = sinon.spy(cacheFile.$.ping, "generateRequest");
 
+        cacheFile._isCacheRunning = true;
         cacheFile.refresh = 5;
         cacheFile._startTimer();
 

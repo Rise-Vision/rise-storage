@@ -19,16 +19,15 @@
       var clock,
         server,
         responseHandler,
-        offlinePlayer = document.querySelector("#offline-player"),
-        cacheHeader = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT" };
+        offlinePlayer = document.querySelector("#offline-player");
 
       // Runs for every suite.
       suiteSetup(function() {
         server = sinon.fakeServer.create();
 
         // Send a response to the ping request.
-        server.respondWith("GET", "http://localhost:9494/ping?callback=_handlePingResponse",
-          [200, cacheHeader, ""]);
+        server.respondWith("GET", "http://localhost:9494",
+          [200, header, cachePingBody]);
 
         clock = sinon.useFakeTimers();
       });

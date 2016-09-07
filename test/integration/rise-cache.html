@@ -36,8 +36,8 @@
         server.respondImmediately = true;
 
         // Ping request
-        server.respondWith("GET", "http://localhost:9494/ping?callback=_handlePingResponse",
-          [200, cacheHeader, "running"]);
+        server.respondWith("GET", "http://localhost:9494",
+          [200, header, cachePingBody]);
 
         // Storage request
         server.respondWith("GET", "https://store-dot-rvaserver2.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db",
