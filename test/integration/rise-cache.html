@@ -11,7 +11,7 @@
   <link rel="import" href="../../rise-storage.html">
 </head>
 <body>
-  <rise-storage id="cache-file" companyId="abc123" fileName="home.jpg"></rise-storage>
+  <rise-storage id="cache-file" companyId="abc123" fileName="home.jpg" refresh="5"></rise-storage>
   <rise-storage id="cache-file-folder" companyId="abc123" folder="images" fileName="home.jpg" refresh="5"></rise-storage>
 
   <script src="../js/rise-storage-data.js"></script>
@@ -36,8 +36,8 @@
         server.respondImmediately = true;
 
         // Ping request
-        server.respondWith("GET", "http://localhost:9494/ping?callback=_handlePingResponse",
-          [200, cacheHeader, "running"]);
+        server.respondWith("GET", "http://localhost:9494",
+          [200, header, JSON.stringify(cachePingBody)]);
 
         // Storage request
         server.respondWith("GET", "https://store-dot-rvaserver2.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db",
@@ -178,6 +178,40 @@
           cacheFileFolder.addEventListener("rise-storage-file-throttled", responseHandler);
           server.respondWith([200, header, JSON.stringify(folderImage)]);
           cacheFileFolder.go();
+        });
+
+      });
+
+      suite("rise-storage-api-error", function() {
+
+        suiteSetup(function () {
+          cacheFile._reset();
+          cacheFile._isCacheRunning = true;
+          cacheFile._pingReceived = true;
+          cacheFile._fileUrl = "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg";
+        });
+
+        teardown(function() {
+          cacheFile.removeEventListener("rise-storage-api-error", responseHandler);
+        });
+
+        test("should retry storage request after rise-storage-api-error is encountered", function(done) {
+          var timerSpy;
+
+          responseHandler = function(response) {
+            timerSpy = sinon.spy(cacheFile.$.ping, "generateRequest");
+
+            clock.tick(299999);
+            assert(timerSpy.notCalled);
+            clock.tick(300000);
+            assert(timerSpy.calledOnce);
+
+            done();
+          };
+
+          cacheFile.addEventListener("rise-storage-api-error", responseHandler);
+          server.respondWith([200, header, JSON.stringify(apiError)]);
+          cacheFile.go();
         });
 
       });
