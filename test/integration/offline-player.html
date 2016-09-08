@@ -27,7 +27,7 @@
 
         // Send a response to the ping request.
         server.respondWith("GET", "http://localhost:9494",
-          [200, header, cachePingBody]);
+          [200, header, JSON.stringify(cachePingBody)]);
 
         clock = sinon.useFakeTimers();
       });
