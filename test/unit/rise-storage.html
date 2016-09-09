@@ -71,6 +71,18 @@
           contentType.ready();
           assert.equal(contentType._contentTypes.length, 2);
         });
+
+        test("should fire rise-storage-ready", function (done) {
+          listener = function() {
+            responded = true;
+          };
+
+          bucket.addEventListener("rise-storage-ready", listener);
+          bucket.ready();
+
+          assert.isTrue(responded);
+          done();
+        });
       });
 
       suite("_computeStorageUrl", function() {
