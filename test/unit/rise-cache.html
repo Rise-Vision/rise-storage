@@ -157,6 +157,18 @@
       cacheFolder._files = [];
     });
 
+    suite("_computeStorageUrl", function() {
+      suiteSetup(function () {
+        cacheFolder._reset();
+        cacheFolder._isCacheRunning = true;
+      });
+
+      test("should correctly set Storage request URL to send request to rise cache", function () {
+        cacheFolder._computeStorageUrl();
+        assert.equal(cacheFolder.$.storage.url, "//localhost:9494/metadata/?url=https%3A%2F%2Fstorage-dot-rvaserver2.appspot.com%2F_ah%2Fapi%2Fstorage%2Fv0.01%2Ffiles%3FcompanyId%3Dabc123%26folder%3Dimages%2F");
+      });
+    });
+
 
     suite("_getFileFromCache", function() {
       setup(function() {
