@@ -161,7 +161,8 @@
           folderImage.files[0].isThrottled = false;
         });
 
-        test("should make a request to Storage after 5 minutes to check if a file is still throttled", function(done) {
+        // TODO: needs to be repurposed once handling failure is implemented
+        /*test("should make a request to Storage after 5 minutes to check if a file is still throttled", function(done) {
           responseHandler = function(response) {
             timerSpy = sinon.spy(cacheFileFolder.$.ping, "generateRequest");
 
@@ -178,7 +179,7 @@
           cacheFileFolder.addEventListener("rise-storage-file-throttled", responseHandler);
           server.respondWith([200, header, JSON.stringify(folderImage)]);
           cacheFileFolder.go();
-        });
+        });*/
 
       });
 
@@ -195,7 +196,8 @@
           cacheFile.removeEventListener("rise-storage-api-error", responseHandler);
         });
 
-        test("should retry storage request after rise-storage-api-error is encountered", function(done) {
+        // TODO: needs to be repurposed once handling failure is implemented
+        /*test("should retry storage request after rise-storage-api-error is encountered", function(done) {
           var timerSpy;
 
           responseHandler = function(response) {
@@ -212,7 +214,7 @@
           cacheFile.addEventListener("rise-storage-api-error", responseHandler);
           server.respondWith([200, header, JSON.stringify(apiError)]);
           cacheFile.go();
-        });
+        });*/
 
       });
 
@@ -259,6 +261,20 @@
           clock = sinon.useFakeTimers();
           cacheFileFolder.addEventListener("rise-cache-file-unavailable", responseHandler);
           cacheFileFolder.go();
+        });
+
+        test("should not make request if company id value is not set", function () {
+          cacheFileFolder.companyid = "";
+          cacheFileFolder.go();
+
+          assert(spy.notCalled);
+        });
+
+        test("should make immediate request for a file", function () {
+          cacheFileFolder.companyid = "abc123";
+          cacheFileFolder.go();
+
+          assert(spy.calledOnce);
         });
 
       });

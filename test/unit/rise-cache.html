@@ -182,14 +182,8 @@
         assert.equal(cacheFile._hasAttemptedGetRequest, false);
       });
 
-      test("should correctly set the cache URL when loading", function() {
+      test("should correctly set the cache URL", function() {
         cacheFile._isLoading = true;
-        cacheFile._getFileFromCache();
-        assert.equal(cacheFile._cacheUrl, "//localhost:9494/files/?url=http://url.to.my.file");
-      });
-
-      test("should correctly set the cache URL when not loading", function() {
-        cacheFile._isLoading = false;
         cacheFile._getFileFromCache();
         assert.equal(cacheFile._cacheUrl, "//localhost:9494/files?url=http://url.to.my.file");
       });
