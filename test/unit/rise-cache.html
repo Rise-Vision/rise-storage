@@ -540,7 +540,7 @@
 
     suite("getMetadata", function() {
       test("should request Storage metadata", function() {
-        var spy = sinon.spy(cacheFile, "_makeStorageRequest");
+        var spy = sinon.spy(cacheFile, "_getStorageSubscription");
 
         cacheFile.getMetadata();
 
