@@ -538,6 +538,16 @@
       });
     });
 
+    suite("getMetadata", function() {
+      test("should request Storage metadata", function() {
+        var spy = sinon.spy(cacheFile, "_getStorageSubscription");
+
+        cacheFile.getMetadata();
+
+        assert(spy.calledOnce);
+      });
+    });
+
   });
 </script>
 </body>
