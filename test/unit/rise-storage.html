@@ -239,12 +239,12 @@
           test("should fire rise-storage-response if the file hasn't changed", function(done) {
             listener = function(response) {
               responded = true;
-              assert.isFalse(response.detail.changed);
+              assert.isTrue(response.detail.changed);
               fileBucket.removeEventListener("rise-storage-response", listener);
             };
 
             fileBucket.addEventListener("rise-storage-response", listener);
-            fileBucket._handleStorageFile(bucketImage);
+            fileBucket._handleStorageFile();
 
             assert.isTrue(responded);
             done();
@@ -300,11 +300,11 @@
           test("should fire rise-storage-response if the file hasn't changed", function(done) {
             listener = function(response) {
               responded = true;
-              assert.isFalse(response.detail.changed);
+              assert.isTrue(response.detail.changed);
             };
 
             fileFolder.addEventListener("rise-storage-response", listener);
-            fileFolder._handleStorageFile(folderImage);
+            fileFolder._handleStorageFile();
 
             assert.isTrue(responded);
             done();
