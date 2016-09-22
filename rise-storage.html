@@ -1130,7 +1130,7 @@
       if (this._pingReceived) {
         if (!this._isCacheRunning) {
           if (this._isFile) {
-            this._fileUrl = encodeURIComponent("https://storage.googleapis.com/" + this._getStoragePath());
+            this._fileUrl = this._getSingleFileURL();
             this._handleStorageFile();
           } else {
             this._getStorageSubscription();
@@ -1141,7 +1141,7 @@
           if (this.companyid) {
             if (this._isFile) {
               // configure the file path
-              this._fileUrl = encodeURIComponent("https://storage.googleapis.com/" + this._getStoragePath());
+              this._fileUrl = this._getSingleFileURL();
 
               this._getFileFromCache();
             }
@@ -1151,6 +1151,10 @@
           }
         }
       }
+    },
+
+    _getSingleFileURL: function() {
+      return "https://storage.googleapis.com/" + encodeURIComponent(this._getStoragePath());
     },
 
     /**

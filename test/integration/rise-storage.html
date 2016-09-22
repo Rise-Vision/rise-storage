@@ -73,7 +73,7 @@
         test("should return the correct URL for a specific file in a bucket after 24 hours has passed since last check of the subscription status", function(done) {
           responseHandler = function(response) {
             assert.equal(response.detail.name, "home.jpg");
-            assert.equal(response.detail.url, "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg");
+            assert.equal(response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg");
             done();
           };
 
@@ -87,7 +87,7 @@
         test("should return the correct URL for a specific file in a bucket", function(done) {
           responseHandler = function(response) {
             assert.equal(response.detail.name, "home.jpg");
-            assert.equal(response.detail.url, "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg");
+            assert.equal(response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg");
             done();
           };
 
@@ -138,7 +138,7 @@
         test("should return the correct URL for a specific file in a folder", function(done) {
           responseHandler = function(response) {
             assert.equal(response.detail.name, "images/home.jpg");
-            assert.equal(response.detail.url, "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%2Fhome.jpg");
+            assert.equal(response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fimages%2Fhome.jpg");
             done();
           };
 
