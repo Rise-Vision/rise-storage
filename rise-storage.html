@@ -646,8 +646,13 @@
     _handleStorageFile: function() {
       var file = {};
 
+      if (this._isLoading) {
+        file.added = true;
+      } else  {
+        file.changed = true;
+      }
+
       file.url = this._fileUrl;
-      file.changed = true;
       file.name = this._getFileNameFromUrl(file.url);
 
       this.fire("rise-storage-response", file);

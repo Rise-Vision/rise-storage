@@ -95,12 +95,26 @@
           file.go();
         });
 
-        test("should fire rise-storage-response with changed status always", function(done) {
+        test("should fire rise-storage-response if the file hasn't changed", function(done) {
           responseHandler = function(response) {
+            assert.isUndefined(response.detail.changed);
+            assert.isTrue(response.detail.added);
+            done();
+          };
+
+          file.addEventListener("rise-storage-response", responseHandler);
+          server.respondWith([200, header, JSON.stringify(bucketImage)]);
+          file.go();
+        });
+
+        test("should fire rise-storage-response with changed status when not loading", function(done) {
+          responseHandler = function(response) {
+            assert.isUndefined(response.detail.added);
             assert.isTrue(response.detail.changed);
             done();
           };
 
+          file._isLoading = false;
           file.addEventListener("rise-storage-response", responseHandler);
           file.go();
         });
@@ -132,12 +146,26 @@
           fileFolder.go();
         });
 
-        test("should fire rise-storage-response with changed status always", function(done) {
+        test("should fire rise-storage-response if the file hasn't changed", function(done) {
           responseHandler = function(response) {
-            assert.isTrue(response.detail.changed);
+            assert.isUndefined(response.detail.changed);
+            assert.isTrue(response.detail.added);
             done();
           };
 
+          fileFolder.addEventListener("rise-storage-response", responseHandler);
+          fileFolder.go();
+        });
+
+        test("should fire rise-storage-response with changed status when not loading", function(done) {
+          responseHandler = function(response) {
+            assert.isUndefined(response.detail.added);
+            assert.isTrue(response.detail.changed);
+            fileFolder._isLoading = true;
+            done();
+          };
+
+          fileFolder._isLoading = false;
           fileFolder.addEventListener("rise-storage-response", responseHandler);
           fileFolder.go();
         });
