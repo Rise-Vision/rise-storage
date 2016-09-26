@@ -587,6 +587,18 @@
           assert(handleStorageErrorWithRetryStub.calledOnce);
         });
       });
+
+      suite("_getSingleFileURL", function() {
+
+        test("should return the storage url of the file in a bucket", function() {
+          assert.equal(fileBucket._getSingleFileURL(), "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg");
+        });
+
+        test("should return the storage url of the file in a folder", function() {
+          assert.equal(fileFolder._getSingleFileURL(), "https://storage.googleapis.com/risemedialibrary-abc123%2Fimages%2Fhome.jpg");
+        });
+
+      });
     });
   </script>
 </body>
