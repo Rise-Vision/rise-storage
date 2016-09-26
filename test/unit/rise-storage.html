@@ -239,12 +239,12 @@
           test("should fire rise-storage-response if the file hasn't changed", function(done) {
             listener = function(response) {
               responded = true;
-              assert.isFalse(response.detail.changed);
+              assert.isTrue(response.detail.added);
               fileBucket.removeEventListener("rise-storage-response", listener);
             };
 
             fileBucket.addEventListener("rise-storage-response", listener);
-            fileBucket._handleStorageFile(bucketImage);
+            fileBucket._handleStorageFile();
 
             assert.isTrue(responded);
             done();
@@ -257,14 +257,14 @@
               assert.equal(response.detail.name, "home.jpg");
               assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg?alt=media");
               fileBucket.removeEventListener("rise-storage-response", listener);
+              fileBucket._isLoading = true;
             };
 
-            bucketImage.files[0].etag = "new";
+            fileBucket._isLoading = false;
             fileBucket.addEventListener("rise-storage-response", listener);
-            fileBucket._handleStorageFile(bucketImage);
+            fileBucket._handleStorageFile();
 
             assert.isTrue(responded);
-            bucketImage.etag = "COjLvarr/cQCEAE=";
             done();
           });
 
@@ -300,11 +300,11 @@
           test("should fire rise-storage-response if the file hasn't changed", function(done) {
             listener = function(response) {
               responded = true;
-              assert.isFalse(response.detail.changed);
+              assert.isTrue(response.detail.added);
             };
 
             fileFolder.addEventListener("rise-storage-response", listener);
-            fileFolder._handleStorageFile(folderImage);
+            fileFolder._handleStorageFile();
 
             assert.isTrue(responded);
             done();
@@ -316,14 +316,14 @@
               assert.isTrue(response.detail.changed);
               assert.equal(response.detail.name, "images/home.jpg");
               assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media");
+              fileFolder._isLoading = true;
             };
 
-            folderImage.files[0].etag = "new";
+            fileFolder._isLoading = false;
             fileFolder.addEventListener("rise-storage-response", listener);
-            fileFolder._handleStorageFile(folderImage);
+            fileFolder._handleStorageFile();
 
             assert.isTrue(responded);
-            folderImage.files[0].etag = "COjLvarr/cQCEAE=";
             done();
           });
 
