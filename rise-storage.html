@@ -1051,8 +1051,13 @@
         this._hasAttemptedGetRequest = true;
       }
       else {
-        this._startTimer();
-        this.fire("rise-cache-error", resp);
+        // Get metadata for single file on a 502 response from Rise Cache.
+        if ((e.detail.request.xhr.response.status === 502) && this._isFile) {
+          this.getMetadata();
+        } else {
+          this._startTimer();
+          this.fire("rise-cache-error", resp);
+        }
       }
     },
 

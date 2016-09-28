@@ -373,43 +373,81 @@
     });
 
     suite("_handleCacheError", function() {
+      var event, resp;
+
+      setup(function() {
+        event = {
+          detail: {
+            request: {
+              xhr: {
+                response: {
+                  status: 502
+                }
+              }
+            }
+          }
+        };
+        resp = {
+          "xhr": {
+            "status": 502,
+            "statusText": "An error occurred"
+          }
+        };
+      });
 
       test("should retry Rise Cache request with GET method if it fails the first time", function(done) {
-        var resp = {
-            "xhr": {
-              "status": 404,
-              "statusText": "An error occurred"
-            }
-          },
-          listener = function(response) {
-            responded = true;
-            cacheFile.removeEventListener("rise-cache-error", listener);
-          };
+        var listener = function(response) {
+          responded = true;
+          cacheFile.removeEventListener("rise-cache-error", listener);
+        };
+
         cacheFile._hasAttemptedGetRequest = false;
         cacheFile.addEventListener("rise-cache-error", listener);
-        cacheFile._handleCacheError({}, resp);
+        cacheFile._handleCacheError(event, resp);
         assert.isFalse(responded);
         assert.equal(cacheFile._cacheRequestMethod, "GET");
         done();
       });
 
-      test("should fire rise-cache-error if there is a problem with the Rise Cache request", function(done) {
-        var resp = {
-          "xhr": {
-            "status": 404,
-            "statusText": "An error occurred"
-          }
-        },
-        listener = function(response) {
+      test("should fire rise-cache-error if there is a problem with the Rise Cache request for a folder", function(done) {
+        var listener = function(response) {
           responded = true;
-          cacheFile.removeEventListener("rise-cache-error", listener);
+          cacheFolder.removeEventListener("rise-cache-error", listener);
         };
-        cacheFile._hasAttemptedGetRequest = true;
-        cacheFile.addEventListener("rise-cache-error", listener);
-        cacheFile._handleCacheError({}, resp);
+
+        cacheFolder._isFile = false;
+        cacheFolder._hasAttemptedGetRequest = true;
+        cacheFolder.addEventListener("rise-cache-error", listener);
+        cacheFolder._handleCacheError(event, resp);
         assert.isTrue(responded);
         done();
       });
+
+      test("should not fire rise-cache-error if there is a problem with the Rise Cache request for a file", function(done) {
+        var listener = function(response) {
+          responded = true;
+          cacheFile.removeEventListener("rise-cache-error", listener);
+        };
+
+        cacheFile._hasAttemptedGetRequest = true;
+        cacheFile.addEventListener("rise-cache-error", listener);
+        cacheFile._handleCacheError(event, resp);
+        assert.isFalse(responded);
+
+        done();
+      });
+
+      test("should go out to Rise Storage if there is a problem with the Rise Cache request for a file", function(done) {
+        var spy = sinon.spy(cacheFile, "getMetadata");
+
+        cacheFile._hasAttemptedGetRequest = true;
+        cacheFile._handleCacheError(event, resp);
+        assert.equal(spy.callCount, 1);
+        spy.restore();
+
+        done();
+      });
+
     });
 
     suite("_handlePingResponse", function() {
