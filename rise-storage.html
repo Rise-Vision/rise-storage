@@ -286,11 +286,11 @@
     /**
      * Whether there is a file from a folder still being downloaded by Cache.
      *
-     * @property _hasFolderFileDownloadingByCache
+     * @property _isFolderFileDownloadingByCache
      * @type boolean
      * @default false
      */
-    _hasFolderFileDownloadingByCache: false,
+    _isFolderFileDownloadingByCache: false,
 
     /**
      * Whether or not a file is throttled.
@@ -980,7 +980,7 @@
       if (resp && resp.xhr) {
 
         if (resp.xhr.status === 202) {
-          this._hasFolderFileDownloadingByCache = true;
+          this._isFolderFileDownloadingByCache = true;
         } else {
 
           file.url = resp.xhr.responseURL;
@@ -1057,7 +1057,7 @@
       this._numFiles++;
 
       if (this._numFiles === this._totalFiles) {
-        if (this._hasFolderFileDownloadingByCache) {
+        if (this._isFolderFileDownloadingByCache) {
           this._totalCacheRequests++;
           // Retry cache request a maximum of 3 times.
           if (this._totalCacheRequests < 3) {
@@ -1102,7 +1102,7 @@
      */
     _retryCacheRequestForFolder: function() {
 
-      this._hasFolderFileDownloadingByCache = false;
+      this._isFolderFileDownloadingByCache = false;
       this._numFiles = 0;
       this._folderFilesRequested = 0;
       this._requestCacheFolderFile(this._folderFilesToRequest[0]);

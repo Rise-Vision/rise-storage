@@ -601,7 +601,7 @@
         cacheFolder._folderFilesToRequest = images.files.slice(1);
         cacheFolder._retryCacheRequestForFolder();
 
-        assert.isFalse(cacheFolder._hasFolderFileDownloadingByCache);
+        assert.isFalse(cacheFolder._isFolderFileDownloadingByCache);
         assert.equal(cacheFolder._numFiles, 0);
         assert.equal(cacheFolder._folderFilesRequested, 0);
 
