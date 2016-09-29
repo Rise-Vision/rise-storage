@@ -11,6 +11,7 @@
   <link rel="import" href="../../rise-storage.html">
 </head>
 <body>
+  <rise-storage id="folder" companyId="abc123" folder="images"></rise-storage>
   <rise-storage id="cache-file" companyId="abc123" fileName="home.jpg" refresh="5"></rise-storage>
   <rise-storage id="cache-file-folder" companyId="abc123" folder="images" fileName="home.jpg" refresh="5"></rise-storage>
 
@@ -22,11 +23,12 @@
       var clock,
         server,
         responseHandler,
+        folder = document.querySelector("#folder"),
         cacheFile = document.querySelector("#cache-file"),
         cacheFileFolder = document.querySelector("#cache-file-folder"),
         cacheHeader = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT", "Location": "//localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" },
         cacheHeaderFolder = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT", "Location": "//localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" },
-        newCacheHeader = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" };
+        newCacheHeader = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" },
         newCacheHeaderFolder = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" };
 
 
@@ -279,7 +281,81 @@
 
       });
 
+      suite("cache requests folder when one file is ready and 2 needs a retry", function() {
+        var spy;
 
+        setup(function () {
+          folder._isCacheRunning = true;
+          folder._pingReceived = true;
+          spy = sinon.spy(folder, "_retryCacheRequestForFolder");
+
+          // Rise Cache request
+          server.respondWith("HEAD", "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg",
+            [202, header, JSON.stringify({ status: 202, message: "File is downloading" })]);
+
+          server.respondWith("HEAD", "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fcircle.png",
+            [202, header, JSON.stringify({ status: 202, message: "File is downloading" })]);
+
+          server.respondWith("HEAD", "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fmy-image.bmp",
+            [202, header, JSON.stringify({ status: 202, message: "File is downloading" })]);
+
+          clock.restore();
+        });
+
+        teardown(function() {
+          spy.restore();
+          clock.restore();
+        });
+
+
+        test("should return the correct URLs for files in a folder after seconds retry", function(done) {
+          responseHandler = function(response) {
+            var files = [];
+            files.push(response.detail);
+
+            if(files.length === 1) {
+              assert.equal(files[0].name, "images%2Fhome.jpg");
+              assert.equal(files[0].url, "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg");
+            }
+          };
+
+          var responseHandler2 = function(response) {
+            assert(spy.calledTwice);
+
+            assert.equal(response.detail[0].name, "images/circle.png");
+            assert.equal(response.detail[1].name, "images/my-image.bmp");
+
+            folder.removeEventListener("rise-cache-folder-unavailable", responseHandler2);
+            done();
+
+          };
+
+          // Delay this call until the cache retry timer has been set.
+          setTimeout(function() {
+            clock.tick(3000);
+            clock.restore(); // Need to set a real timeout.
+
+            server.respondWith("HEAD", "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg",
+              [200, newCacheHeaderFolder, ""]);
+
+            // Retry timer has expired. Wait for next one to be set before expiring it as well.
+            setTimeout(function() {
+              clock.tick(3000);
+            }, 0)
+
+            clock = sinon.useFakeTimers();
+          }, 0);
+
+          clock = sinon.useFakeTimers();
+
+          folder.addEventListener("rise-storage-response", responseHandler);
+          folder.addEventListener("rise-cache-folder-unavailable", responseHandler2);
+          server.respondWith([200, header, JSON.stringify(images)]);
+          folder.go();
+
+
+        });
+      });
     });
   </script>
 </body>

@@ -586,6 +586,30 @@
       });
     });
 
+    suite("_removeHandledFile", function() {
+      test("should remove item from _folderFilesToRequest after it has been handled to the widget", function() {
+        cacheFolder._folderFilesToRequest = images.files.slice(1);
+        cacheFolder._removeHandledFile("images%2Fhome.jpg");
+        assert.deepEqual(cacheFolder._folderFilesToRequest, images.files.slice(2));
+      });
+    });
+
+    suite("_retryCacheRequestForFolder", function() {
+      test("should clean up variable and call the _requestCacheFolderFile with first file on the list of items", function() {
+        var spy = sinon.spy(cacheFolder, "_requestCacheFolderFile");
+
+        cacheFolder._folderFilesToRequest = images.files.slice(1);
+        cacheFolder._retryCacheRequestForFolder();
+
+        assert.isFalse(cacheFolder._isFolderFileDownloadingByCache);
+        assert.equal(cacheFolder._numFiles, 0);
+        assert.equal(cacheFolder._folderFilesRequested, 0);
+
+        assert(spy.calledWith(cacheFolder._folderFilesToRequest[0]));
+
+      });
+    });
+
   });
 </script>
 </body>
