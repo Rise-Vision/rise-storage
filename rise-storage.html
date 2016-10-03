@@ -3,6 +3,39 @@
 
 <script src="../underscore/underscore.js"></script>
 
+<!--
+`rise-storage` is a web component that uses Google’s Storage API to retrieve the URL of a file, or the URLs of all files within a folder, from Rise Storage.
+
+The `companyId` attribute is required which is to identify the company in Rise Vision that your Storage files reside in. You can get the `companyId` by copying the value of the `cid` parameter in the URL when logged into the [Rise Vision platform](http://rva.risevision.com/).
+
+Folders and files are monitored for changes if the `refresh` attribute is set, although a minimum refresh time of 5 minutes is enforced.
+
+    <rise-storage companyId="abc123" folder="my-folder" fileName="sample-image.jpg" refresh="5"></rise-storage>
+
+#### Filtering
+
+Files can optionally be filtered by file type or content type. This feature is meant to be used when returning multiple files in a folder, and so will only take effect when a `folder` attribute is specified but not a `fileName`, or if neither a `folder` nor a `fileName` attribute are specified (in which case files in the root bucket would be returned).
+
+To filter by file type, a `fileType` attribute should be added to the `<rise-storage>` element. `fileType` can be either `image` or `video`, in which case only those files that are images (`jpg`, `png`, `bmp`, `svg`, `gif`, `webp`) or HTML5 videos (`mp4`, `webm`) will be returned.
+
+Alternatively, the `contentType` attribute can be used to filter by a specific content type. Multiple content types can be specified by separating them with a space.
+
+    <rise-storage companyId="abc123" folder="my-folder" fileType="image"></rise-storage>
+
+    <rise-storage companyId="abc123" contentType="image/png image/jpeg"></rise-storage>
+
+### Sorting
+
+Files can optionally be sorted by filename, modified date or randomly. This feature is meant to be used when returning multiple files in a folder, and so will only take effect when a `folder` attribute is specified but not a `fileName`, or if neither a `folder` nor a `fileName` attribute are specified (in which case files in the root bucket would be returned).
+
+To specify a sort order, a `sort` attribute should be added to the `<rise-storage>` element. `sort` can be one of `name`, `date` or `random`.
+
+To specify a direction, the `sortDirection` attribute should be used. `sortDirection` can be either `asc` or `desc`. If the sort attribute is set to `random`, then `sortDirection` is ignored. If the `sort` attribute is `name` or `date`, but `sortDirection` is not specified, the files will be sorted in ascending order.
+
+    <rise-storage companyId="abc123" folder="my-folder" sort="name" sortDirection="desc"></rise-storage>
+
+@demo
+-->
 <dom-module id="rise-storage">
   <template>
 
@@ -69,28 +102,30 @@
         value: ""
       },
       /**
-       * The file type.
+       * The file type. Either `image` or `video` (for HTML5 video types).
        */
       filetype: {
         type: String,
         value: ""
       },
       /**
-       * The content type.
+       * A specific content type (e.g. `image/png` or `video/mp4`).
        */
       contenttype: {
         type: String,
         value: ""
       },
       /**
-       * The field to sort on.
+       * The field to sort on. Either `name`, `date` or `random`.
        */
       sort: {
         type: String,
         value: ""
       },
       /**
-       * The sort order.
+       * The sort order. Either `asc` or `desc`.
+       *
+       * Default value is `asc` if `sort` is `name` or `date`
        */
       sortdirection: {
         type: String,
@@ -98,6 +133,8 @@
       },
       /**
        * The number of minutes before Storage will be checked for changes.
+       *
+       * The minimum refresh time is 5 minutes.
        */
       refresh: {
         type: Number,
@@ -127,6 +164,42 @@
      */
 
     /**
+     * Fired when the request is for a folder that is empty.
+     *
+     * @event rise-storage-empty-folder
+     */
+
+    /**
+     * Fired when the request is for a folder that does not exist.
+     *
+     * @event rise-storage-no-folder
+     */
+
+    /**
+     * Fired when the request is for a file that does not exist.
+     *
+     * @event rise-storage-no-file
+     */
+
+    /**
+     * Fired when the request is for a file that has been throttled.
+     *
+     * @event rise-storage-file-throttled
+     */
+
+    /**
+     * Fired when the request is for a folder that only contains files of the wrong file type format.
+     *
+     * @event rise-storage-folder-invalid
+     */
+
+    /**
+     * Fired when the request returns a response indicating an error with the Storage API.
+     *
+     * @event rise-storage-api-error
+     */
+
+    /**
      * Fired when an error is received from cache.
      *
      * @event rise-cache-error
@@ -136,6 +209,12 @@
      * Fired when rise cache is not running.
      *
      * @event rise-cache-not-running
+     */
+
+    /**
+     * Fired when rise cache is downloading a file of significant size.
+     *
+     * @event rise-cache-file-unavailable
      */
 
     /**
@@ -302,26 +381,6 @@
     _fileThrottled: false,
 
     /**
-     * Handle to the parent Chrome App, in case the page is being ran in offline-player
-     * @property offlinePlayer
-     * @default null
-     */
-    offlinePlayer: null,
-
-    /**
-     * Origin of the parent Chrome App, in case the page is being ran in offline-player
-     * @property offlinePlayerOrigin
-     * @default null
-     */
-    offlinePlayerOrigin: null,
-
-    /**
-     * Id used to verify responses sent by offline-player belongs to this component (in case
-     * more than one exists on a given page)
-     */
-    offlinePlayerClientId: null,
-
-    /**
      * Keeps the name of the local storage key
      * @property LOCAL_STORAGE_NAME
      * @default subscriptionStatus
@@ -346,8 +405,6 @@
       this._videos = ["video/mp4", "video/ogg", "video/webm"];
       this._contentTypes = this.contenttype.split(" ");
 
-      this._registerOfflinePlayerHandlers();
-
       this.fire("rise-storage-ready");
     },
 
@@ -355,19 +412,7 @@
      * An instance of the element was inserted into the DOM.
      */
     attached: function() {
-      var self = this;
-
-      // The small timeout is required to detect if the presentation is part of offline-player (a postMessage will be sent)
-      setTimeout(function() {
-        if(!self._isOfflinePlayer()) {
-          self.$.ping.generateRequest();
-        }
-        else {
-          self._isCacheRunning = false;
-          self._pingReceived = true;
-          self.go();
-        }
-      }, 100);
+      this.$.ping.generateRequest();
     },
 
     /***************************************** STORAGE ******************************************/
@@ -517,22 +562,6 @@
      * Fires when a response is received from the Storage request.
      */
     _handleStorageResponse: function(e, resp) {
-      if(this._isOfflinePlayer()) {
-        this.offlinePlayer.postMessage({
-          type: "storage-component-response",
-          clientId: this.offlinePlayerClientId,
-          response: resp.response }, "*");
-      }
-      else {
-        this._processStorageResponse(e, resp);
-      }
-    },
-
-    /**
-     * Fires when an updated response is received. If the page is running as part of offline-player, urls will be updated accordingly.
-     * Otherwise, the response will be the same as retrieved from the Storage request.
-     */
-    _processStorageResponse: function(e, resp) {
       if (resp && resp.response) {
         if (this._isAPIError(resp.response)) {
           var fireError = this._handleStorageErrorWithRetry();
@@ -719,11 +748,8 @@
                 if (self._isCacheRunning) {
                   file.url = self._baseCacheUrl + "/files/?url=" + encodeURIComponent(item.selfLink + suffix);
                 }
-                else if(!self._isOfflinePlayer()) {
-                  file.url = item.selfLink + suffix;
-                }
                 else {
-                  file.url = item.selfLink;
+                  file.url = item.selfLink + suffix;
                 }
 
                 self._files.push({
@@ -740,11 +766,8 @@
                   file.url = self._baseCacheUrl + "/files" + "?url=" +
                     encodeURIComponent(item.selfLink + suffix);
                 }
-                else if(!self._isOfflinePlayer()) {
-                  file.url = item.selfLink + suffix;
-                }
                 else {
-                  file.url = item.selfLink;
+                  file.url = item.selfLink + suffix;
                 }
 
                 previousItem = _.find(self._files, function(obj) {
@@ -1237,11 +1260,6 @@
      * Handles a refresh.
      */
     _startTimer: function() {
-      // If the page is running as part of offline-player, do not refresh automatically
-      if(this._isOfflinePlayer()) {
-        return;
-      }
-
       // If Rise Cache is not running do not refresh
       if (!this._isCacheRunning) {
         return;
@@ -1457,22 +1475,7 @@
     },
 
     _loadStorage: function() {
-      if(!this._isOfflinePlayer()) {
-        this.$.storage.generateRequest();
-      }
-      else {
-        this.offlinePlayer.postMessage({
-          type: "storage-component-load",
-          clientId: this.offlinePlayerClientId,
-          url: this.$.storage.url }, "*");
-      }
-    },
-
-    /**
-     * Checks whether the page is running inside offline-player
-     */
-    _isOfflinePlayer: function() {
-      return this.offlinePlayer !== null;
+      this.$.storage.generateRequest();
     },
 
     _getFilePath: function() {
@@ -1494,46 +1497,6 @@
      */
     _getStoragePath: function() {
       return "risemedialibrary-" + this.companyid + "/" + this._getFilePath();
-    },
-
-    /**
-     * Listens for events sent by offline player
-     */
-    _registerOfflinePlayerHandlers: function() {
-      var self = this;
-
-      // Generates an id for the client
-      self.offlinePlayerClientId = Math.round(Math.random() * 10000000);
-
-      // Handle offline-player events
-      window.addEventListener("message", function(event) {
-        if(event.data === "register.chrome.app.window") {
-          self.offlinePlayer = event.source;
-          self.offlinePlayerOrigin = event.origin;
-          self.pingReceived = true;
-          self.isCacheRunning = false;
-        }
-        else if(event.data.type === "storage-target-changed") {
-          if(event.data.targets && event.data.targets.some(targetMatches)) {
-            self._hasAttemptedSecondStorageRequest = false;
-            self._loadStorage();
-          }
-        }
-        else if(event.data.type === "storage-component-loaded") {
-          if(event.data.clientId === self.offlinePlayerClientId) {
-            self._handleStorageResponse({}, event.data);
-          }
-        }
-        else if(event.data.type === "storage-component-response-updated") {
-          if(event.data.clientId === self.offlinePlayerClientId) {
-            self._processStorageResponse({}, event.data);
-          }
-        }
-      }, false);
-
-      function targetMatches(element) {
-        return element.startsWith(self._getStoragePath());
-      }
     },
 
     /**
