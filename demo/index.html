@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <title>rise-storage Demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.min.js"></script>
+
+  <link rel="import" href="../rise-storage.html">
+</head>
+<body unresolved>
+<rise-storage id="sorting" companyId="b428b4e8-c8b9-41d5-8a10-b4193c789443" folder="images"
+              sort="name" sortDirection="desc" fileType="image" env="test"></rise-storage>
+
+<p>An example of <code>&lt;rise-storage&gt;</code>:</p>
+
+<img id="image1" src="" />
+<img id="image2" src="" />
+<img id="image3" src="" />
+
+<script>
+  var files = [];
+  var storage = document.querySelector("rise-storage"),
+    image1 = document.querySelector("#image1"),
+    image2 = document.querySelector("#image2"),
+    image3 = document.querySelector("#image3");
+
+  storage.addEventListener("rise-storage-response", function(e) {
+    var file = e.detail;
+    var existing = files.filter(function(f) {
+      return file.name === f.name;
+    });
+
+    existing = existing.length > 0 ? existing[0] : null;
+
+    if(file.added) {
+      files.push(file);
+    }
+    else if(file.changed && existing) {
+      existing.url = file.url;
+    }
+    else if(file.deleted && existing) {
+      files.splice(files.indexOf(existing), 1);
+    }
+
+    image1.src = files.length > 0 ? files[0].url : "";
+    image2.src = files.length > 1 ? files[1].url : "";
+    image3.src = files.length > 2 ? files[2].url : "";
+  });
+</script>
+
+</body>
+</html>

@@ -583,7 +583,7 @@
           }
           var handleStorageErrorWithRetryStub = sinon.stub(fileBucket, "_handleStorageErrorWithRetry", function(){});
 
-          fileBucket._processStorageResponse({},resp);
+          fileBucket._handleStorageResponse({},resp);
           assert(handleStorageErrorWithRetryStub.calledOnce);
         });
       });
