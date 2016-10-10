@@ -437,9 +437,21 @@
         done();
       });
 
-      test("should go out to Rise Storage if there is a problem with the Rise Cache request for a file", function(done) {
+      test("should go out to Rise Storage if Rise Cache returns a 502", function(done) {
         var spy = sinon.spy(cacheFile, "getMetadata");
 
+        cacheFile._hasAttemptedGetRequest = true;
+        cacheFile._handleCacheError(event, resp);
+        assert.equal(spy.callCount, 1);
+        spy.restore();
+
+        done();
+      });
+
+      test("should go out to Rise Storage if Rise Cache returns a 534", function(done) {
+        var spy = sinon.spy(cacheFile, "getMetadata");
+
+        event.detail.request.xhr.response.status = 534;
         cacheFile._hasAttemptedGetRequest = true;
         cacheFile._handleCacheError(event, resp);
         assert.equal(spy.callCount, 1);

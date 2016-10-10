@@ -1139,18 +1139,16 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
        * Fires when an error is received from the Rise Cache request.
        */
       _handleCacheError: function(e, resp) {
-        var isServerError = false;
-
         if ( !this._hasAttemptedGetRequest ) {
           this._cacheRequestMethod = "GET";
           this.$.cache.generateRequest();
           this._hasAttemptedGetRequest = true;
         }
         else {
-          isServerError = e.detail.request.xhr.response.status.toString()[0] === "5";
+          var status = e.detail.request.xhr.response.status;
 
           // Get metadata for single file on Rise Cache server error.
-          if (isServerError && this._isFile) {
+          if (((status === 502) || (status === 534)) && this._isFile) {
             this.getMetadata();
           } else {
             this._startTimer();
