@@ -6,6 +6,7 @@
   var colors = require("colors");
   var del = require("del");
   var gulp = require("gulp");
+  var htmlreplace = require("gulp-html-replace");
   var jshint = require("gulp-jshint");
   var runSequence = require("run-sequence");
   var wct = require("web-component-tester").gulp.init(gulp);
@@ -20,6 +21,19 @@
       .pipe(jshint())
       .pipe(jshint.reporter("jshint-stylish"))
       .pipe(jshint.reporter("fail"));
+  });
+
+  gulp.task("version", function() {
+    var pkg = require("./package.json");
+
+    gulp.src("./rise-storage.html")
+      .pipe(htmlreplace({
+        "version": {
+          src: pkg.version,
+          tpl: "<script>var sheetVersion = \"%s\";</script>"
+        }
+      }, {keepBlockTags: true}))
+      .pipe(gulp.dest("./"));
   });
 
   // ***** Primary Tasks ***** //
@@ -40,7 +54,7 @@
     runSequence("test:local", cb);
   });
 
-  gulp.task("build", function (cb) {
+  gulp.task("build", ["version"], function (cb) {
     runSequence("lint", cb);
   });
 

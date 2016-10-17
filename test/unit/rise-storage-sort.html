@@ -15,150 +15,155 @@
 
   <script src="../js/rise-storage-data.js"></script>
   <script>
-    suite("rise-storage", function() {
-      var folder = document.querySelector("#folder");
 
-      suite("_sortFiles", function() {
-        var filesByName =
+    var folder = document.querySelector("#folder"),
+      display = "abc123";
+
+    // mock logger getting display id from Rise Cache
+    sinon.stub(folder.$.logger.$.displayId, "generateRequest", function() {
+      folder.$.logger._onDisplayIdResponse(null, {response: {displayId: display}});
+    });
+
+    suite("_sortFiles", function() {
+      var filesByName =
           [{
             "sortBy": "images/home.jpg",
             "url": "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg"
           },
+            {
+              "sortBy": "images/circle.png",
+              "url": "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png"
+            },
+            {
+              "sortBy": "images/my-image.bmp",
+              "url": "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp"
+            }],
+        filesByDate =
+          [{
+            sortBy: 1423221853313,  // "2015-02-06T11:24:13.313Z"
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp"
+          },
+            {
+              sortBy: 1422605949263,  // "2015-01-30T08:19:09.263Z"
+              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg"
+            },
+            {
+              sortBy: 1423071991263,  // "2015-02-04T17:46:31.263Z"
+              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png"
+            }],
+        sortedFiles;
+
+      test("should sort by name in ascending order", function() {
+        folder.sort = "name";
+        folder.sortdirection = "asc";
+        sortedFiles = JSON.stringify(folder._sortFiles(filesByName));
+
+        assert.equal(sortedFiles, JSON.stringify([
           {
-            "sortBy": "images/circle.png",
-            "url": "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png"
+            sortBy: "images/circle.png",
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png"
           },
           {
-            "sortBy": "images/my-image.bmp",
-            "url": "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp"
-          }],
-          filesByDate =
-          [{
-              sortBy: 1423221853313,  // "2015-02-06T11:24:13.313Z"
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp"
-            },
-            {
-              sortBy: 1422605949263,  // "2015-01-30T08:19:09.263Z"
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg"
-            },
-            {
-              sortBy: 1423071991263,  // "2015-02-04T17:46:31.263Z"
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png"
-          }],
-          sortedFiles;
+            sortBy: "images/home.jpg",
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg"
+          },
+          {
+            sortBy: "images/my-image.bmp",
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp"
+          }]
+        ));
+      });
 
-        test("should sort by name in ascending order", function() {
-          folder.sort = "name";
-          folder.sortdirection = "asc";
-          sortedFiles = JSON.stringify(folder._sortFiles(filesByName));
+      test("should sort by name in descending order", function() {
+        folder.sort = "name";
+        folder.sortdirection = "desc";
+        sortedFiles = JSON.stringify(folder._sortFiles(filesByName));
 
-          assert.equal(sortedFiles, JSON.stringify([
-            {
-              sortBy: "images/circle.png",
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png"
-            },
-            {
-              sortBy: "images/home.jpg",
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg"
-            },
-            {
-              sortBy: "images/my-image.bmp",
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp"
-            }]
-          ));
-        });
+        assert.equal(sortedFiles, JSON.stringify([
+          {
+            sortBy: "images/my-image.bmp",
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp"
+          },
+          {
+            sortBy: "images/home.jpg",
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg"
+          },
+          {
+            sortBy: "images/circle.png",
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png"
+          }]
+        ));
+      });
 
-        test("should sort by name in descending order", function() {
-          folder.sort = "name";
-          folder.sortdirection = "desc";
-          sortedFiles = JSON.stringify(folder._sortFiles(filesByName));
+      test("should sort by date in ascending order", function() {
+        folder.sort = "date";
+        folder.sortdirection = "asc";
+        sortedFiles = JSON.stringify(folder._sortFiles(filesByDate));
 
-          assert.equal(sortedFiles, JSON.stringify([
-            {
-              sortBy: "images/my-image.bmp",
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp"
-            },
-            {
-              sortBy: "images/home.jpg",
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg"
-            },
-            {
-              sortBy: "images/circle.png",
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png"
-            }]
-          ));
-        });
+        assert.equal(sortedFiles, JSON.stringify([
+          {
+            sortBy: 1422605949263,  // "2015-01-30T08:19:09.263Z"
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg"
+          },
+          {
+            sortBy: 1423071991263,  // "2015-02-04T17:46:31.263Z"
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png"
+          },
+          {
+            sortBy: 1423221853313,  // "2015-02-06T11:24:13.313Z"
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp"
+          }]
+        ));
+      });
 
-        test("should sort by date in ascending order", function() {
-          folder.sort = "date";
-          folder.sortdirection = "asc";
-          sortedFiles = JSON.stringify(folder._sortFiles(filesByDate));
+      test("should sort by date in descending order", function() {
+        folder.sort = "date";
+        folder.sortdirection = "desc";
+        sortedFiles = JSON.stringify(folder._sortFiles(filesByDate));
 
-          assert.equal(sortedFiles, JSON.stringify([
-            {
-              sortBy: 1422605949263,  // "2015-01-30T08:19:09.263Z"
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg"
-            },
-            {
-              sortBy: 1423071991263,  // "2015-02-04T17:46:31.263Z"
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png"
-            },
-            {
-              sortBy: 1423221853313,  // "2015-02-06T11:24:13.313Z"
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp"
-            }]
-          ));
-        });
+        assert.equal(sortedFiles, JSON.stringify([
+          {
+            sortBy: 1423221853313,  // "2015-02-06T11:24:13.313Z"
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp"
+          },
+          {
+            sortBy: 1423071991263,  // "2015-02-04T17:46:31.263Z"
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png"
+          },
+          {
+            sortBy: 1422605949263,  // "2015-01-30T08:19:09.263Z"
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg"
+          }]
+        ));
+      });
 
-        test("should sort by date in descending order", function() {
-          folder.sort = "date";
-          folder.sortdirection = "desc";
-          sortedFiles = JSON.stringify(folder._sortFiles(filesByDate));
+      test("should sort in random order", function() {
+        folder.sort = "random";
+        sortedFiles = folder._sortFiles(filesByName);
 
-          assert.equal(sortedFiles, JSON.stringify([
-            {
-              sortBy: 1423221853313,  // "2015-02-06T11:24:13.313Z"
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp"
-            },
-            {
-              sortBy: 1423071991263,  // "2015-02-04T17:46:31.263Z"
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png"
-            },
-            {
-              sortBy: 1422605949263,  // "2015-01-30T08:19:09.263Z"
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg"
-            }]
-          ));
-        });
+        // Not possible to predict what order files will be returned in, only that they are returned.
+        assert.equal(sortedFiles.length, 3);
+      });
 
-        test("should sort in random order", function() {
-          folder.sort = "random";
-          sortedFiles = folder._sortFiles(filesByName);
+      test("should sort in ascending order when no sortDirection is provided", function() {
+        folder.sort = "name";
+        folder.sortdirection = null;
+        sortedFiles = JSON.stringify(folder._sortFiles(filesByName));
 
-          // Not possible to predict what order files will be returned in, only that they are returned.
-          assert.equal(sortedFiles.length, 3);
-        });
-
-        test("should sort in ascending order when no sortDirection is provided", function() {
-          folder.sort = "name";
-          folder.sortdirection = null;
-          sortedFiles = JSON.stringify(folder._sortFiles(filesByName));
-
-          assert.equal(sortedFiles, JSON.stringify([
-            {
-              sortBy: "images/circle.png",
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png"
-            },
-            {
-              sortBy: "images/home.jpg",
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg"
-            },
-            {
-              sortBy: "images/my-image.bmp",
-              url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp"
-            }]
-          ));
-        });
+        assert.equal(sortedFiles, JSON.stringify([
+          {
+            sortBy: "images/circle.png",
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png"
+          },
+          {
+            sortBy: "images/home.jpg",
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg"
+          },
+          {
+            sortBy: "images/my-image.bmp",
+            url: "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp"
+          }]
+        ));
       });
     });
   </script>
