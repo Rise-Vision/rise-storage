@@ -18,13 +18,25 @@
 <script src="../js/rise-storage-data.js"></script>
 
 <script>
+
+  var cacheFolder = document.querySelector("#cache-folder"),
+    cacheFile = document.querySelector("#cache-file"),
+    invalidFolder = document.querySelector("#cache-folder-invalid"),
+    display = "abc123";
+
+  var instances = [cacheFolder, cacheFile, invalidFolder];
+
+  for (var i = 0; i < instances.length; i += 1) {
+    // mock logger getting display id from Rise Cache
+    sinon.stub(instances[i].$.logger.$.displayId, "generateRequest", function() {
+      instances[i].$.logger._onDisplayIdResponse(null, {response: {displayId: display}});
+    });
+  }
+
   suite("rise-storage", function() {
     var responded,
       listener,
       clock,
-      cacheFolder = document.querySelector("#cache-folder"),
-      cacheFile = document.querySelector("#cache-file"),
-      invalidFolder = document.querySelector("#cache-folder-invalid"),
       suffix = "?alt=media";
 
     suiteSetup(function() {

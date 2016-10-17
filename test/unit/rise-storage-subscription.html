@@ -16,12 +16,24 @@
 
 <script src="../js/rise-storage-data.js"></script>
 <script>
-suite("rise-storage", function() {
-  var responded,
-    listener,
-    fileBucket = document.querySelector("#file-bucket"),
-    fileBucketTest = document.querySelector("#file-bucket-test");
 
+  var fileBucket = document.querySelector("#file-bucket"),
+    fileBucketTest = document.querySelector("#file-bucket-test"),
+    display = "abc123";
+
+  var instances = [fileBucket, fileBucketTest];
+
+  for (var i = 0; i < instances.length; i += 1) {
+    instance = instances[i];
+    // mock logger getting display id from Rise Cache
+    sinon.stub(instances[i].$.logger.$.displayId, "generateRequest", function() {
+      instances[i].$.logger._onDisplayIdResponse(null, {response: {displayId: display}});
+    });
+  }
+
+  suite("rise-storage", function() {
+  var responded,
+    listener;
 
   suiteSetup(function() {
     xhr = sinon.useFakeXMLHttpRequest();
@@ -49,7 +61,7 @@ suite("rise-storage", function() {
       fileBucket._getStorageSubscription();
       assert.equal(fileBucket.$.storageSubscription.url, "https://store-dot-rvaserver2.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db");
     });
-    
+
     test("should correctly set Test Store request URL", function() {
       fileBucketTest._getStorageSubscription();
       assert.equal(fileBucketTest.$.storageSubscription.url, "https://store-dot-rvacore-test.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db");

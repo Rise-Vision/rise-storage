@@ -19,13 +19,25 @@
   <script src="../js/rise-storage-subscription-date.js"></script>
 
   <script>
+
+    var folder = document.querySelector("#folder"),
+      cacheFile = document.querySelector("#cache-file"),
+      cacheFileFolder = document.querySelector("#cache-file-folder"),
+      display = "abc123";
+
+    var instances = [folder,cacheFile,cacheFileFolder];
+
+    for (var i = 0; i < instances.length; i += 1) {
+      // mock logger getting display id from Rise Cache
+      sinon.stub(instances[i].$.logger.$.displayId, "generateRequest", function() {
+        instances[i].$.logger._onDisplayIdResponse(null, {response: {displayId: display}});
+      });
+    }
+
     suite("rise-storage", function() {
       var clock,
         server,
         responseHandler,
-        folder = document.querySelector("#folder"),
-        cacheFile = document.querySelector("#cache-file"),
-        cacheFileFolder = document.querySelector("#cache-file-folder"),
         cacheHeader = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT", "Location": "//localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" },
         cacheHeaderFolder = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT", "Location": "//localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" },
         newCacheHeader = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" },

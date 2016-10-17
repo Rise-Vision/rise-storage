@@ -22,18 +22,30 @@
 
   <script src="../js/rise-storage-data.js"></script>
   <script>
+
+    var noCompany = document.querySelector("#noCompany"),
+      bucket = document.querySelector("#bucket"),
+      folder = document.querySelector("#folder"),
+      invalidFolder = document.querySelector("#invalid-folder"),
+      folderTesting = document.querySelector("#folder-testing"),
+      fileFolder = document.querySelector("#file-folder"),
+      fileBucket = document.querySelector("#file-bucket"),
+      contentType = document.querySelector("#content-type"),
+      display = "abc123";
+
+    var instances = [noCompany,bucket,folder,invalidFolder,folderTesting,fileFolder,fileBucket,contentType];
+
+    for (var i = 0; i < instances.length; i += 1) {
+      // mock logger getting display id from Rise Cache
+      sinon.stub(instances[i].$.logger.$.displayId, "generateRequest", function() {
+        instances[i].$.logger._onDisplayIdResponse(null, {response: {displayId: display}});
+      });
+    }
+
     suite("rise-storage", function() {
       var responded,
         listener,
         clock,
-        noCompany = document.querySelector("#noCompany"),
-        bucket = document.querySelector("#bucket"),
-        folder = document.querySelector("#folder"),
-        invalidFolder = document.querySelector("#invalid-folder"),
-        folderTesting = document.querySelector("#folder-testing"),
-        fileFolder = document.querySelector("#file-folder"),
-        fileBucket = document.querySelector("#file-bucket"),
-        contentType = document.querySelector("#content-type"),
         suffix = "?alt=media";
 
       suiteSetup(function() {
@@ -57,6 +69,17 @@
       });
 
       suite("ready", function() {
+        var logStub;
+
+        setup(function() {
+          logStub = sinon.stub(bucket.$.logger, "log");
+        });
+
+        teardown(function() {
+          logStub.restore();
+          bucket.usage = "";
+        });
+
         test("should set the number of supported image types", function() {
           bucket.ready();
           assert.equal(bucket._images.length, 6);
@@ -72,6 +95,19 @@
           assert.equal(contentType._contentTypes.length, 2);
         });
 
+        test("should log usage", function () {
+          bucket.ready();
+          assert.equal(logStub.args[0][0],"component_storage_events");
+          assert.include(JSON.stringify(logStub.args[0][1]),"{\"event\":\"ready\",\"version\":");
+        });
+
+        test("should log usage and include 'usage_type'", function() {
+          bucket.usage = "widget";
+          bucket.ready();
+          assert.equal(logStub.args[0][0],"component_storage_events");
+          assert.include(JSON.stringify(logStub.args[0][1]),"{\"event\":\"ready\",\"usage_type\":\"widget\",\"version\":");
+        });
+
         test("should fire rise-storage-ready", function (done) {
           listener = function() {
             responded = true;
@@ -83,6 +119,19 @@
           assert.isTrue(responded);
           done();
         });
+      });
+
+      suite("_isValidUsage", function () {
+
+        test("should return true when 'standalone' or 'widget'", function () {
+          assert.isTrue(fileFolder._isValidUsage("widget"));
+          assert.isTrue(fileFolder._isValidUsage("standalone"));
+        });
+
+        test("should return false when invalid", function () {
+          assert.isFalse(fileFolder._isValidUsage("test"));
+        });
+
       });
 
       suite("_computeStorageUrl", function() {

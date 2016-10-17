@@ -18,12 +18,23 @@
 
   <script src="../js/rise-storage-data.js"></script>
   <script>
+
+    var fileBucket = document.querySelector("#file-bucket"),
+      contentType = document.querySelector("#content-type"),
+      imageFileType = document.querySelector("#image-file-type"),
+      videoFileType = document.querySelector("#video-file-type"),
+      display = "abc123";
+
+    var instances = [fileBucket,contentType,imageFileType,videoFileType];
+
+    for (var i = 0; i < instances.length; i += 1) {
+      // mock logger getting display id from Rise Cache
+      sinon.stub(instances[i].$.logger.$.displayId, "generateRequest", function() {
+        instances[i].$.logger._onDisplayIdResponse(null, {response: {displayId: display}});
+      });
+    }
+
     suite("rise-storage", function() {
-      var
-        fileBucket = document.querySelector("#file-bucket"),
-        contentType = document.querySelector("#content-type"),
-        imageFileType = document.querySelector("#image-file-type"),
-        videoFileType = document.querySelector("#video-file-type");
 
       suite("_filterFiles", function() {
         test("should return true if no fileType or contentType attribute is provided", function() {

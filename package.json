@@ -1,6 +1,6 @@
 {
   "name": "rise-storage",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Rise Vision web component for retrieving files from Rise Storage",
   "scripts": {
     "test": "gulp test",
@@ -29,6 +29,7 @@
     "gulp": "~3.8.10",
     "gulp-bower": "~0.0.10",
     "gulp-bump": "~0.2.0",
+    "gulp-html-replace": "~1.6.1",
     "gulp-jshint": "~1.10.0",
     "jshint-stylish": "~1.0.2",
     "run-sequence": "~1.1.0",

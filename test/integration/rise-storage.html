@@ -22,17 +22,28 @@
   <script src="../js/rise-storage-subscription-date.js"></script>
 
   <script>
-    suite("rise-storage", function() {
 
+    var folder = document.querySelector("#folder"),
+      file = document.querySelector("#file"),
+      fileFolder = document.querySelector("#file-folder"),
+      fileType = document.querySelector("#file-type"),
+      invalidFolder = document.querySelector("#folder-invalid"),
+      contentType = document.querySelector("#content-type"),
+      display = "abc123";
+
+    var instances = [folder,file,fileFolder,fileType,invalidFolder,contentType];
+
+    for (var i = 0; i < instances.length; i += 1) {
+      // mock logger getting display id from Rise Cache
+      sinon.stub(instances[i].$.logger.$.displayId, "generateRequest", function() {
+        instances[i].$.logger._onDisplayIdResponse(null, {response: {displayId: display}});
+      });
+    }
+
+    suite("rise-storage", function() {
       var clock,
         server,
-        responseHandler,
-        folder = document.querySelector("#folder"),
-        file = document.querySelector("#file"),
-        fileFolder = document.querySelector("#file-folder"),
-        fileType = document.querySelector("#file-type"),
-        invalidFolder = document.querySelector("#folder-invalid"),
-        contentType = document.querySelector("#content-type");
+        responseHandler;
 
       // Runs for every test
       setup(function () {
