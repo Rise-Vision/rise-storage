@@ -46,7 +46,8 @@
       var responded,
         listener,
         clock,
-        suffix = "?alt=media";
+        suffix = "?alt=media",
+        modeSuffix = "&mode=preview";
 
       suiteSetup(function() {
         xhr = sinon.useFakeXMLHttpRequest();
@@ -274,11 +275,11 @@
             listener = function(response) {
               responded = true;
               assert.equal(response.detail.name, "home.jpg");
-              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg?alt=media");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg?alt=media&mode=preview");
             };
 
             fileBucket.addEventListener("rise-storage-response", listener);
-            fileBucket._fileUrl = url + suffix;
+            fileBucket._fileUrl = url + suffix + modeSuffix;
             fileBucket._handleStorageFile(bucketImage);
 
             assert.isTrue(responded);
@@ -304,7 +305,7 @@
               responded = true;
               assert.isTrue(response.detail.changed);
               assert.equal(response.detail.name, "home.jpg");
-              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg?alt=media");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg?alt=media&mode=preview");
               fileBucket.removeEventListener("rise-storage-response", listener);
               fileBucket._isLoading = true;
             };
@@ -335,11 +336,11 @@
             listener = function(response) {
               responded = true;
               assert.equal(response.detail.name, "images/home.jpg");
-              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=preview");
             };
 
             fileFolder.addEventListener("rise-storage-response", listener);
-            fileFolder._fileUrl = url + suffix;
+            fileFolder._fileUrl = url + suffix + modeSuffix;
             fileFolder._handleStorageFile(folderImage);
 
             assert.isTrue(responded);
@@ -364,7 +365,7 @@
               responded = true;
               assert.isTrue(response.detail.changed);
               assert.equal(response.detail.name, "images/home.jpg");
-              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=preview");
               fileFolder._isLoading = true;
             };
 
@@ -404,9 +405,9 @@
               assert.equal(files[0].name, "images/home.jpg");
               assert.equal(files[1].name, "images/circle.png");
               assert.equal(files[2].name, "images/my-image.bmp");
-              assert.equal(files[0].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media");
-              assert.equal(files[1].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media");
-              assert.equal(files[2].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media");
+              assert.equal(files[0].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=preview");
+              assert.equal(files[1].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=preview");
+              assert.equal(files[2].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media&mode=preview");
             }
           };
 
@@ -428,9 +429,9 @@
               assert.equal(files[0].name, "images/home.jpg");
               assert.equal(files[1].name, "images/circle.png");
               assert.equal(files[2].name, "images/my-image.bmp");
-              assert.equal(files[0].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media");
-              assert.equal(files[1].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media");
-              assert.equal(files[2].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media");
+              assert.equal(files[0].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=preview");
+              assert.equal(files[1].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=preview");
+              assert.equal(files[2].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media&mode=preview");
             }
           };
 
@@ -446,7 +447,7 @@
             if (response.detail.changed) {
               responded = true;
               assert.equal(response.detail.name, "images/circle.png");
-              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=preview");
             }
           };
 
@@ -463,7 +464,7 @@
             if (response.detail.added) {
               responded = true;
               assert.equal(response.detail.name, "images/golf.svg");
-              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media&mode=preview");
             }
           };
 
@@ -487,7 +488,7 @@
             if (response.detail.deleted) {
               responded = true;
               assert.equal(response.detail.name, "images/golf.svg");
-              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media&mode=preview");
             }
           };
 
@@ -640,11 +641,11 @@
       suite("_getSingleFileURL", function() {
 
         test("should return the storage url of the file in a bucket", function() {
-          assert.equal(fileBucket._getSingleFileURL(), "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg");
+          assert.equal(fileBucket._getSingleFileURL(), "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg?mode=preview");
         });
 
         test("should return the storage url of the file in a folder", function() {
-          assert.equal(fileFolder._getSingleFileURL(), "https://storage.googleapis.com/risemedialibrary-abc123%2Fimages%2Fhome.jpg");
+          assert.equal(fileFolder._getSingleFileURL(), "https://storage.googleapis.com/risemedialibrary-abc123%2Fimages%2Fhome.jpg?mode=preview");
         });
 
       });
