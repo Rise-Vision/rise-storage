@@ -743,6 +743,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
           file = {},
           previousItem = null,
           suffix = "?alt=media",
+          modeSuffix = "&mode=preview",
           filesFiltered = 0,
           totalFiles = 0;
 
@@ -787,7 +788,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
                     file.url = self._baseCacheUrl + "/files/?url=" + encodeURIComponent(item.selfLink + suffix);
                   }
                   else {
-                    file.url = item.selfLink + suffix;
+                    file.url = item.selfLink + suffix + modeSuffix;
                   }
 
                   self._files.push({
@@ -805,7 +806,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
                       encodeURIComponent(item.selfLink + suffix);
                   }
                   else {
-                    file.url = item.selfLink + suffix;
+                    file.url = item.selfLink + suffix + modeSuffix;
                   }
 
                   previousItem = _.find(self._files, function(obj) {
@@ -1289,7 +1290,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
       },
 
       _getSingleFileURL: function() {
-        return "https://storage.googleapis.com/" + encodeURIComponent(this._getStoragePath());
+        return "https://storage.googleapis.com/" + encodeURIComponent(this._getStoragePath()) + ((!this._isCacheRunning) ? "?mode=preview" : "");
       },
 
       /**
@@ -1379,7 +1380,8 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
           filePath = "",
           startIndex = -1,
           endIndex = -1,
-          suffix = "?alt=media";
+          suffix = "?alt=media",
+          modeSuffix = "&mode=preview";
 
         // File in the root of the bucket.
         if (response.selfLink) {
@@ -1400,7 +1402,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
           this._fileUrl = encodeURIComponent("https://storage.googleapis.com/" + bucket + "/" + filePath);
         }
         else {
-          this._fileUrl = url + suffix;
+          this._fileUrl = url + suffix + modeSuffix;
         }
       },
 
