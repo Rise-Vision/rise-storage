@@ -386,13 +386,19 @@
         });
 
         test("should fire rise-storage-empty-folder if a folder is empty", function(done) {
+          var startTimerSpy = sinon.spy( folder, "_startTimer" );
+
           responseHandler = function(response) {
             assert.isObject(response.detail, "response.detail is an object");
             assert.deepEqual(response.detail, {}, "response.detail is an empty object");
+            assert.isTrue(startTimerSpy.calledOnce);
+
+            startTimerSpy.restore();
 
             done();
           };
 
+          folder.refresh = 5;
           folder.addEventListener("rise-storage-empty-folder", responseHandler);
           server.respondWith([200, header, JSON.stringify(emptyFolder)]);
           folder.go();
