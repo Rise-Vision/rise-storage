@@ -95,13 +95,26 @@
           file.go();
         });
 
-        test("should return the correct URL for a specific file in a bucket", function(done) {
+        test("should return the correct URL for a specific file in a bucket when running in player", function(done) {
+          responseHandler = function(response) {
+            assert.equal(response.detail.name, "home.jpg");
+            assert.equal(response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg?mode=no-rc");
+            done();
+          };
+
+          file.displayid = "def456";
+          file.addEventListener("rise-storage-response", responseHandler);
+          file.go();
+        });
+
+        test("should return the correct URL for a specific file in a bucket when running in preview", function(done) {
           responseHandler = function(response) {
             assert.equal(response.detail.name, "home.jpg");
             assert.equal(response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg?mode=preview");
             done();
           };
 
+          file.displayid = "preview";
           file.addEventListener("rise-storage-response", responseHandler);
           file.go();
         });
@@ -146,13 +159,26 @@
           fileFolder.removeEventListener("rise-storage-response", responseHandler);
         });
 
-        test("should return the correct URL for a specific file in a folder", function(done) {
+        test("should return the correct URL for a specific file in a folder when running in player", function(done) {
+          responseHandler = function(response) {
+            assert.equal(response.detail.name, "images/home.jpg");
+            assert.equal(response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fimages%2Fhome.jpg?mode=no-rc");
+            done();
+          };
+
+          fileFolder.displayid = "def456";
+          fileFolder.addEventListener("rise-storage-response", responseHandler);
+          fileFolder.go();
+        });
+
+        test("should return the correct URL for a specific file in a folder when running in preview", function(done) {
           responseHandler = function(response) {
             assert.equal(response.detail.name, "images/home.jpg");
             assert.equal(response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fimages%2Fhome.jpg?mode=preview");
             done();
           };
 
+          fileFolder.displayid = "preview";
           fileFolder.addEventListener("rise-storage-response", responseHandler);
           fileFolder.go();
         });
@@ -200,7 +226,31 @@
           folder.removeEventListener("rise-storage-response", responseHandler);
         });
 
-        test("should return the correct URLs for files in a folder", function(done) {
+        test("should return the correct URLs for files in a folder when running in player", function(done) {
+          var files = [];
+
+          responseHandler = function(response) {
+            files.push(response.detail);
+
+            if(files.length === 3) {
+              assert.equal(files[0].name, "images/home.jpg");
+              assert.equal(files[1].name, "images/circle.png");
+              assert.equal(files[2].name, "images/my-image.bmp");
+              assert.equal(files[0].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=no-rc");
+              assert.equal(files[1].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=no-rc");
+              assert.equal(files[2].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media&mode=no-rc");
+              done();
+            }
+          };
+
+
+          folder.displayid = "def456";
+          folder.addEventListener("rise-storage-response", responseHandler);
+          server.respondWith([200, header, JSON.stringify(images)]);
+          folder.go();
+        });
+
+        test("should return the correct URLs for files in a folder when running in preview", function(done) {
           var files = [];
 
           responseHandler = function(response) {
@@ -217,7 +267,10 @@
             }
           };
 
-
+          folder._reset();
+          folder._isCacheRunning = false;
+          folder._pingReceived = true;
+          folder.displayid = "preview";
           folder.addEventListener("rise-storage-response", responseHandler);
           server.respondWith([200, header, JSON.stringify(images)]);
           folder.go();

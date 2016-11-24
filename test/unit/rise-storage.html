@@ -47,7 +47,7 @@
         listener,
         clock,
         suffix = "?alt=media",
-        modeSuffix = "&mode=preview";
+        modeSuffix = "&mode=";
 
       suiteSetup(function() {
         xhr = sinon.useFakeXMLHttpRequest();
@@ -269,17 +269,35 @@
 
           teardown(function () {
             fileBucket.removeEventListener("rise-storage-response", listener);
+            fileBucket.displayid = "";
           });
 
-          test("should return the correct URL for a specific file in a bucket", function(done) {
+          test("should return the correct URL for a specific file in a bucket running in player", function(done) {
+            listener = function(response) {
+              responded = true;
+              assert.equal(response.detail.name, "home.jpg");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg?alt=media&mode=no-rc");
+            };
+
+            fileBucket.displayid = "def456";
+            fileBucket.addEventListener("rise-storage-response", listener);
+            fileBucket._fileUrl = url + suffix + modeSuffix + "no-rc";
+            fileBucket._handleStorageFile(bucketImage);
+
+            assert.isTrue(responded);
+            done();
+          });
+
+          test("should return the correct URL for a specific file in a bucket running in preview", function(done) {
             listener = function(response) {
               responded = true;
               assert.equal(response.detail.name, "home.jpg");
               assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg?alt=media&mode=preview");
             };
 
+            fileBucket.displayid = "preview";
             fileBucket.addEventListener("rise-storage-response", listener);
-            fileBucket._fileUrl = url + suffix + modeSuffix;
+            fileBucket._fileUrl = url + suffix + modeSuffix + "preview";
             fileBucket._handleStorageFile(bucketImage);
 
             assert.isTrue(responded);
@@ -330,17 +348,35 @@
 
           teardown(function() {
             fileFolder.removeEventListener("rise-storage-response", listener);
+            fileFolder.displayid = "";
           });
 
-          test("should return the correct URL for a specific file in a bucket", function(done) {
+          test("should return the correct URL for a specific file in a bucket running in player", function(done) {
+            listener = function(response) {
+              responded = true;
+              assert.equal(response.detail.name, "images/home.jpg");
+              assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=no-rc");
+            };
+
+            fileFolder.displayid = "def456";
+            fileFolder.addEventListener("rise-storage-response", listener);
+            fileFolder._fileUrl = url + suffix + modeSuffix + "no-rc";
+            fileFolder._handleStorageFile(folderImage);
+
+            assert.isTrue(responded);
+            done();
+          });
+
+          test("should return the correct URL for a specific file in a bucket running in preview", function(done) {
             listener = function(response) {
               responded = true;
               assert.equal(response.detail.name, "images/home.jpg");
               assert.equal(response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=preview");
             };
 
+            fileFolder.displayid = "preview";
             fileFolder.addEventListener("rise-storage-response", listener);
-            fileFolder._fileUrl = url + suffix + modeSuffix;
+            fileFolder._fileUrl = url + suffix + modeSuffix + "preview";
             fileFolder._handleStorageFile(folderImage);
 
             assert.isTrue(responded);
@@ -392,9 +428,36 @@
 
         teardown(function() {
           images = localImages;
+          folder.removeEventListener("rise-storage-response", listener);
+          folder.displayid = "";
         });
 
-        test("should return the correct URLs for files in a folder", function(done) {
+        test("should return the correct URLs for files in a folder running in player", function(done) {
+          var files = [];
+
+          listener = function(response) {
+            files.push(response.detail);
+
+            if(files.length === 3) {
+              responded = true;
+              assert.equal(files[0].name, "images/home.jpg");
+              assert.equal(files[1].name, "images/circle.png");
+              assert.equal(files[2].name, "images/my-image.bmp");
+              assert.equal(files[0].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=no-rc");
+              assert.equal(files[1].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=no-rc");
+              assert.equal(files[2].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media&mode=no-rc");
+            }
+          };
+
+          folder.displayid = "def456";
+          folder.addEventListener("rise-storage-response", listener);
+          folder._handleStorageFolder(images);
+
+          assert.isTrue(responded);
+          done();
+        });
+
+        test("should return the correct URLs for files in a folder running in preview", function(done) {
           var files = [];
 
           listener = function(response) {
@@ -411,6 +474,8 @@
             }
           };
 
+          folder._reset();
+          folder.displayid = "preview";
           folder.addEventListener("rise-storage-response", listener);
           folder._handleStorageFolder(images);
 
@@ -640,11 +705,28 @@
 
       suite("_getSingleFileURL", function() {
 
-        test("should return the storage url of the file in a bucket", function() {
+        teardown(function() {
+          fileBucket.displayid = "";
+          fileFolder.displayid = "";
+        });
+
+        test("should return the storage url of the file in a bucket running in player", function() {
+          fileBucket.displayid = "def456";
+          assert.equal(fileBucket._getSingleFileURL(), "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg?mode=no-rc");
+        });
+
+        test("should return the storage url of the file in a bucket running in preview", function() {
+          fileBucket.displayid = "preview";
           assert.equal(fileBucket._getSingleFileURL(), "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg?mode=preview");
         });
 
-        test("should return the storage url of the file in a folder", function() {
+        test("should return the storage url of the file in a folder running in player", function() {
+          fileFolder.displayid = "def456";
+          assert.equal(fileFolder._getSingleFileURL(), "https://storage.googleapis.com/risemedialibrary-abc123%2Fimages%2Fhome.jpg?mode=no-rc");
+        });
+
+        test("should return the storage url of the file in a folder running in preview", function() {
+          fileFolder.displayid = "preview";
           assert.equal(fileFolder._getSingleFileURL(), "https://storage.googleapis.com/risemedialibrary-abc123%2Fimages%2Fhome.jpg?mode=preview");
         });
 
