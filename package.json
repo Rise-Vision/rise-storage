@@ -1,6 +1,6 @@
 {
   "name": "rise-storage",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Rise Vision web component for retrieving files from Rise Storage",
   "scripts": {
     "test": "gulp test",
