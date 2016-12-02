@@ -182,7 +182,6 @@
       });
     });
 
-
     suite("_getFileFromCache", function() {
       setup(function() {
         cacheFile._reset();
@@ -476,20 +475,21 @@
     });
 
     suite("_handlePingResponse", function() {
-      test("should correctly set _isCacheRunning and _pingReceived if ping response is an empty string", function(done) {
-        var listener = function() {
-          responded = true;
-          cacheFile.removeEventListener("rise-cache-not-running", listener);
-        };
+      teardown(function() {
+        cacheFile._totalPingRequests = 0;
+      });
 
-        cacheFile.addEventListener("rise-cache-not-running", listener);
+      test("should increment ping request count and execute _handlePingRetry if ping response is an empty string", function() {
+        var retryStub = sinon.stub(cacheFile, "_handlePingRetry");
+
         cacheFile._handlePingResponse({}, { "response": "" });
 
         assert.equal(cacheFile._isCacheRunning, false);
         assert.equal(cacheFile._pingReceived, true);
-        assert.isTrue(responded);
+        assert.equal(cacheFile._totalPingRequests, 1, "incremented total ping requests");
+        assert.isTrue(retryStub.calledWith({ "response": "" }), "calling _handlePingRetry and providing response");
 
-        done();
+        retryStub.restore();
       });
 
       test("should correctly set _isCacheRunning and _pingReceived if ping response is not an empty string", function() {
@@ -500,27 +500,133 @@
     });
 
     suite("_handlePingError", function() {
-      test("should correctly set _isCacheRunning and _pingReceived if a ping error occurs", function(done) {
+      teardown(function() {
+        cacheFile._totalPingRequests = 0;
+      });
+
+      test("should increment ping request count and execute _handlePingRetry", function() {
         var resp = {
           "xhr": {
             "status": 404,
             "statusText": "An error occurred"
           }
         },
-        listener = function() {
+          retryStub = sinon.stub(cacheFile, "_handlePingRetry");
+
+        cacheFile._handlePingError({}, resp);
+
+        assert.equal(cacheFile._totalPingRequests, 1, "incremented total ping requests");
+        assert.isTrue(retryStub.calledWith(resp), "calling _handlePingRetry and providing response");
+
+        retryStub.restore();
+      });
+    });
+
+    suite("_handlePingRetry", function() {
+      var resp = {
+        "xhr": {
+          "status": 404,
+          "statusText": "An error occurred"
+        }
+      },
+        processStub;
+
+      teardown(function() {
+        processStub.restore();
+        cacheFile.displayid = "";
+      });
+
+      test("should execute _processCacheNotRunning immediately when player is not running", function() {
+        processStub = sinon.stub(cacheFile, "_processCacheNotRunning");
+
+        cacheFile.displayid = "preview";
+        cacheFile._handlePingRetry(resp);
+        assert.isTrue(processStub.calledWith(resp,false));
+      });
+
+      test("should retry and ping rise cache 3 times in 30 second intervals when running in player", function(done) {
+        sinon.stub(cacheFile.$.ping, "generateRequest", function() {
+          // mock ping error
+          cacheFile._handlePingError(null, resp);
+          // simulate 30 seconds
+          clock.tick(30000);
+        });
+
+        processStub = sinon.stub(cacheFile, "_processCacheNotRunning", function(response, isPlayerRunning) {
+          assert.equal(cacheFile._totalPingRequests, 3);
+          assert.deepEqual(resp, response);
+          assert.isTrue(isPlayerRunning);
+
+          cacheFile.$.ping.generateRequest.restore();
+          done();
+        });
+
+        cacheFile.displayid = "abc123";
+        cacheFile._handlePingRetry(resp);
+        // simulate 30 seconds
+        clock.tick(30000);
+
+      });
+
+    });
+
+    suite("_processCacheNotRunning", function() {
+      var resp = {
+        "xhr": {
+          "status": 404,
+          "statusText": "An error occurred"
+        }
+      },
+        goStub;
+
+      setup(function() {
+        cacheFile.displayid = "abc123";
+        cacheFile._isCacheRunning = true;
+        cacheFile._pingReceived = false;
+        cacheFile._totalPingRequests = 3;
+        goStub = sinon.stub(cacheFile, "go");
+      });
+
+      teardown(function() {
+        cacheFile._isCacheRunning = false;
+        cacheFile._pingReceived = false;
+        cacheFile._totalPingRequests = 0;
+        cacheFile.displayid = "";
+        goStub.restore();
+      });
+
+      test("should fire 'rise-cache-not-running` event with correct params", function(done) {
+        var listener = function() {
           responded = true;
           cacheFile.removeEventListener("rise-cache-not-running", listener);
         };
 
         cacheFile.addEventListener("rise-cache-not-running", listener);
-        cacheFile._handlePingError({}, resp);
+        cacheFile._processCacheNotRunning(resp, true);
 
         assert.equal(cacheFile._isCacheRunning, false);
         assert.equal(cacheFile._pingReceived, true);
+        assert.equal(cacheFile._totalPingRequests, 0);
         assert.isTrue(responded);
 
         done();
       });
+
+      test("should not execute go() if running in player", function() {
+        cacheFile._processCacheNotRunning(resp, true);
+
+        assert.equal(goStub.callCount, 0);
+      });
+
+      test("should execute go() if not running in player", function() {
+        cacheFile.displayid = "preview";
+        cacheFile._isCacheRunning = false;
+
+        cacheFile._processCacheNotRunning(resp, false);
+
+        assert.isTrue(goStub.calledOnce);
+      });
+
     });
 
     suite("_startTimer", function() {
