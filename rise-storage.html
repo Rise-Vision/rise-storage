@@ -293,6 +293,15 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
       _totalCacheRequests: 0,
 
       /**
+       * The total number of ping requests made to Rise Cache when running in player.
+       *
+       * @property _totalPingRequests
+       * @type number
+       * @default 0
+       */
+      _totalPingRequests: 0,
+
+      /**
        * The flag for making a get request if it wasn't done yet.
        *
        * @property _hasAttemptedGetRequest
@@ -1229,26 +1238,55 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
 
         if (this._isCacheRunning) {
           console.log("[rise-storage v2] Rise Cache V2 running", resp.response);
+          this._totalPingRequests = 0;
+          this.go();
         }
         else {
-          this.fire("rise-cache-not-running", resp);
-          console.log("[rise-storage v2] Rise Cache V2 not running");
-        }
+          this._totalPingRequests += 1;
 
-        this.go();
+          this._handlePingRetry(resp);
+        }
       },
 
       /**
        * Fires when an error is received from the ping request.
        */
       _handlePingError: function(e, resp) {
+        this._totalPingRequests += 1;
+
+        this._handlePingRetry(resp);
+      },
+
+      _handlePingRetry: function(resp) {
+        if (this._isPlayerRunning()) {
+          if ( this._totalPingRequests === 3 ) {
+            this._processCacheNotRunning(resp, true);
+
+            console.log("[rise-storage v2] Ping Error");
+          } else {
+            // retry ping in 30 seconds
+            this.debounce("ping", function() {
+              this.$.ping.generateRequest();
+            }, 30000);
+          }
+        } else {
+          this._processCacheNotRunning(resp, false);
+        }
+      },
+
+      _processCacheNotRunning: function(resp, isPlayerRunning) {
         this._isCacheRunning = false;
         this._pingReceived = true;
+        this._totalPingRequests = 0;
 
-        this.fire("rise-cache-not-running", resp);
-        this.go();
+        this.fire("rise-cache-not-running", resp, isPlayerRunning);
 
-        console.log("[rise-storage v2] Ping Error");
+        console.log("[rise-storage v2] Rise Cache V2 not running");
+
+        if (!isPlayerRunning) {
+          // in preview proceed with go()
+          this.go();
+        }
       },
 
       /**
