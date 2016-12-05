@@ -596,9 +596,13 @@
       });
 
       test("should fire 'rise-cache-not-running` event with correct params", function(done) {
-        var listener = function() {
-          responded = true;
+        var listener = function(response) {
           cacheFile.removeEventListener("rise-cache-not-running", listener);
+
+          assert.isTrue(response.detail.isPlayerRunning);
+          assert.deepEqual(response.detail.resp, resp);
+
+          done();
         };
 
         cacheFile.addEventListener("rise-cache-not-running", listener);
@@ -607,9 +611,6 @@
         assert.equal(cacheFile._isCacheRunning, false);
         assert.equal(cacheFile._pingReceived, true);
         assert.equal(cacheFile._totalPingRequests, 0);
-        assert.isTrue(responded);
-
-        done();
       });
 
       test("should not execute go() if running in player", function() {

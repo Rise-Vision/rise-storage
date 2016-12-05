@@ -77,7 +77,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
 </dom-module>
 
 <!-- build:version -->
-<script>var sheetVersion = "1.4.0";</script>
+<script>var sheetVersion = "1.4.2";</script>
 <!-- endbuild -->
 
 <script>
@@ -1279,7 +1279,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
         this._pingReceived = true;
         this._totalPingRequests = 0;
 
-        this.fire("rise-cache-not-running", resp, isPlayerRunning);
+        this.fire("rise-cache-not-running", { resp: resp, isPlayerRunning: isPlayerRunning } );
 
         console.log("[rise-storage v2] Rise Cache V2 not running");
 
