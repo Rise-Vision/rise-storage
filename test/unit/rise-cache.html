@@ -577,7 +577,7 @@
           "statusText": "An error occurred"
         }
       },
-        goStub;
+        goStub, startTimerStub;
 
       setup(function() {
         cacheFile.displayid = "abc123";
@@ -585,6 +585,7 @@
         cacheFile._pingReceived = false;
         cacheFile._totalPingRequests = 3;
         goStub = sinon.stub(cacheFile, "go");
+        startTimerStub = sinon.stub(cacheFile, "_startTimer");
       });
 
       teardown(function() {
@@ -593,6 +594,7 @@
         cacheFile._totalPingRequests = 0;
         cacheFile.displayid = "";
         goStub.restore();
+        startTimerStub.restore();
       });
 
       test("should fire 'rise-cache-not-running` event with correct params", function(done) {
@@ -613,10 +615,11 @@
         assert.equal(cacheFile._totalPingRequests, 0);
       });
 
-      test("should not execute go() if running in player", function() {
+      test("should execute _startTimer() if running in player", function() {
         cacheFile._processCacheNotRunning(resp, true);
 
-        assert.equal(goStub.callCount, 0);
+        assert.equal(goStub.callCount, 0, "go() correctly not called");
+        assert.isTrue(startTimerStub.calledOnce, "_startTimer() correctly called");
       });
 
       test("should execute go() if not running in player", function() {
@@ -625,7 +628,8 @@
 
         cacheFile._processCacheNotRunning(resp, false);
 
-        assert.isTrue(goStub.calledOnce);
+        assert.isTrue(goStub.calledOnce, "go() correctly called");
+        assert.equal(startTimerStub.callCount, 0, "_startTimer() correctly not called");
       });
 
     });
@@ -635,6 +639,11 @@
 
       teardown(function () {
         if (timerSpy) { timerSpy.restore(); }
+      });
+
+      teardown(function() {
+        cacheFile.displayid = "";
+        cacheFolder.displayid = "";
       });
 
       test("should correctly set refresh interval", function() {
@@ -649,7 +658,7 @@
         assert.equal(cacheFolder.refresh, 5);
       });
 
-      test("should not execute any timer if Rise Cache is not running", function() {
+      test("should not execute any timer if Rise Cache is not running and component not running in player", function() {
         timerSpy = sinon.spy(cacheFile.$.ping, "generateRequest");
 
         cacheFile._isCacheRunning = false;
@@ -658,6 +667,18 @@
 
         clock.tick(300000);
         assert.equal(timerSpy.callCount, 0);
+      });
+
+      test("should execute timer if Rise Cache is not running but component is running in player", function() {
+        timerSpy = sinon.spy(cacheFile.$.ping, "generateRequest");
+
+        cacheFile._isCacheRunning = false;
+        cacheFile.displayid = "abc123";
+        cacheFile.refresh = 5;
+        cacheFile._startTimer();
+
+        clock.tick(300000);
+        assert.isTrue(timerSpy.calledOnce);
       });
 
       test("should check for changes to a file", function() {
