@@ -77,7 +77,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
 </dom-module>
 
 <!-- build:version -->
-<script>var sheetVersion = "1.4.2";</script>
+<script>var sheetVersion = "1.4.3";</script>
 <!-- endbuild -->
 
 <script>
@@ -1286,6 +1286,9 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
         if (!isPlayerRunning) {
           // in preview proceed with go()
           this.go();
+        } else {
+          // running in player, start a refresh timer to account for possible recovery of Rise Cache by watchdog
+          this._startTimer();
         }
       },
 
@@ -1365,8 +1368,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
        * Handles a refresh.
        */
       _startTimer: function() {
-        // If Rise Cache is not running do not refresh
-        if (!this._isCacheRunning) {
+        if (!this._isCacheRunning && !this._isPlayerRunning()) {
           return;
         }
 
