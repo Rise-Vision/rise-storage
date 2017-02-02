@@ -39,10 +39,10 @@
       var clock,
         server,
         responseHandler,
-        cacheHeader = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT", "Location": "//localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" },
-        cacheHeaderFolder = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT", "Location": "//localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" },
-        newCacheHeader = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" },
-        newCacheHeaderFolder = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" };
+        cacheHeader = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT", "Location": "http://localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" },
+        cacheHeaderFolder = { "Last-Modified": "Fri, 01 May 2015 15:32:11 GMT", "Location": "http://localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" },
+        newCacheHeader = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "http://localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" },
+        newCacheHeaderFolder = { "Last-Modified": "Fri, 24 Apr 2015 15:32:11 GMT", "Location": "http://localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" };
 
 
       // Runs for every test
@@ -81,7 +81,7 @@
         test( "should return the correct URL for a specific file in a bucket", function( done ) {
           responseHandler = function( response ) {
             assert.equal( response.detail.name, "home.jpg" );
-            assert.equal( response.detail.url, "//localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" );
+            assert.equal( response.detail.url, "http://localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" );
             done();
           };
 
@@ -105,7 +105,7 @@
           responseHandler = function( response ) {
             assert.isTrue( response.detail.changed );
             assert.equal( response.detail.name, "home.jpg" );
-            assert.equal( response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" );
+            assert.equal( response.detail.url, "http://localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" );
             done();
           };
 
@@ -131,7 +131,7 @@
           responseHandler = function( response ) {
             assert.isTrue( response.detail.added );
             assert.equal( response.detail.name, "images%2Fhome.jpg" );
-            assert.equal( response.detail.url, "//localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" );
+            assert.equal( response.detail.url, "http://localhost:9494/files/?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" );
             done();
           };
 
@@ -155,7 +155,7 @@
           responseHandler = function( response ) {
             assert.isTrue( response.detail.changed );
             assert.equal( response.detail.name, "images%2Fhome.jpg" );
-            assert.equal( response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" );
+            assert.equal( response.detail.url, "http://localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" );
             done();
           };
 
@@ -262,13 +262,13 @@
           spy = sinon.spy( folder, "_retryCacheRequestForFolder" );
 
           // Rise Cache request
-          server.respondWith( "HEAD", "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg",
+          server.respondWith( "HEAD", "http://localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg",
             [ 202, header, JSON.stringify( { status: 202, message: "File is downloading" } ) ] );
 
-          server.respondWith( "HEAD", "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fcircle.png",
+          server.respondWith( "HEAD", "http://localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fcircle.png",
             [ 202, header, JSON.stringify( { status: 202, message: "File is downloading" } ) ] );
 
-          server.respondWith( "HEAD", "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fmy-image.bmp",
+          server.respondWith( "HEAD", "http://localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fmy-image.bmp",
             [ 202, header, JSON.stringify( { status: 202, message: "File is downloading" } ) ] );
 
           clock.restore();
@@ -290,7 +290,7 @@
 
             if ( files.length === 1 ) {
               assert.equal( files[ 0 ].name, "images%2Fhome.jpg" );
-              assert.equal( files[ 0 ].url, "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" );
+              assert.equal( files[ 0 ].url, "http://localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" );
             }
           };
 
@@ -311,7 +311,7 @@
             // Need to set a real timeout.
             clock.restore();
 
-            server.respondWith( "HEAD", "//localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg",
+            server.respondWith( "HEAD", "http://localhost:9494/files?url=https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg",
               [ 200, newCacheHeaderFolder, "" ] );
 
             // Retry timer has expired. Wait for next one to be set before expiring it as well.

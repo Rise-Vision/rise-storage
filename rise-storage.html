@@ -43,7 +43,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
     <rise-logger id="logger"></rise-logger>
 
     <iron-ajax id="ping"
-               url="//localhost:9494"
+               url="http://localhost:9494"
                handle-as="json"
                on-response="_handlePingResponse"
                on-error="_handlePingError"
@@ -342,7 +342,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
        * @type string
        * @default "//localhost:9494"
        */
-      _baseCacheUrl: "//localhost:9494",
+      _baseCacheUrl: "http://localhost:9494",
 
       /**
        * Whether or not Rise Cache V2 is running.
