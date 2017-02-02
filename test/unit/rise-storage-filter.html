@@ -18,62 +18,63 @@
 
   <script src="../js/rise-storage-data.js"></script>
   <script>
+    /* global sinon, suite, test, assert */
 
-    var fileBucket = document.querySelector("#file-bucket"),
-      contentType = document.querySelector("#content-type"),
-      imageFileType = document.querySelector("#image-file-type"),
-      videoFileType = document.querySelector("#video-file-type"),
-      display = "abc123";
+    var fileBucket = document.querySelector( "#file-bucket" ),
+      contentType = document.querySelector( "#content-type" ),
+      imageFileType = document.querySelector( "#image-file-type" ),
+      videoFileType = document.querySelector( "#video-file-type" ),
+      display = "abc123",
+      instances = [ fileBucket, contentType, imageFileType, videoFileType ],
+      i;
 
-    var instances = [fileBucket,contentType,imageFileType,videoFileType];
-
-    for (var i = 0; i < instances.length; i += 1) {
+    for ( i = 0; i < instances.length; i += 1 ) {
       // mock logger getting display id from Rise Cache
-      sinon.stub(instances[i].$.logger.$.displayId, "generateRequest", function() {
-        instances[i].$.logger._onDisplayIdResponse(null, {response: {displayId: display}});
-      });
+      sinon.stub( instances[ i ].$.logger.$.displayId, "generateRequest", function() {
+        instances[ i ].$.logger._onDisplayIdResponse( null, { response: { displayId: display } } );
+      } );
     }
 
-    suite("rise-storage", function() {
+    suite( "rise-storage", function() {
 
-      suite("_filterFiles", function() {
-        test("should return true if no fileType or contentType attribute is provided", function() {
-          assert.equal(fileBucket._filterFiles("image/jpeg"), true);
-        });
-      });
+      suite( "_filterFiles", function() {
+        test( "should return true if no fileType or contentType attribute is provided", function() {
+          assert.equal( fileBucket._filterFiles( "image/jpeg" ), true );
+        } );
+      } );
 
-      suite("_filterByContentType", function() {
-        test("should return true if a content type matches one of the contentType attribute values", function() {
-          assert.equal(contentType._filterByContentType("image/jpeg"), true);
-        });
+      suite( "_filterByContentType", function() {
+        test( "should return true if a content type matches one of the contentType attribute values", function() {
+          assert.equal( contentType._filterByContentType( "image/jpeg" ), true );
+        } );
 
-        test("should return false if a content type does not match one of the contentType attribute values", function() {
-          assert.equal(contentType._filterByContentType("video/webm"), false);
-        });
-      });
+        test( "should return false if a content type does not match one of the contentType attribute values", function() {
+          assert.equal( contentType._filterByContentType( "video/webm" ), false );
+        } );
+      } );
 
-      suite("_filterByFileType", function() {
-        test("should return true when filtering by image and the content type is a jpeg", function() {
-          assert.equal(imageFileType._filterByFileType("image/jpeg"), true);
-        });
+      suite( "_filterByFileType", function() {
+        test( "should return true when filtering by image and the content type is a jpeg", function() {
+          assert.equal( imageFileType._filterByFileType( "image/jpeg" ), true );
+        } );
 
-        test("should return true when filtering by image and the content type is a webp", function() {
-          assert.equal(imageFileType._filterByFileType("image/webp"), true);
-        });
+        test( "should return true when filtering by image and the content type is a webp", function() {
+          assert.equal( imageFileType._filterByFileType( "image/webp" ), true );
+        } );
 
-        test("should return false when filtering by image and the content type is a webm", function() {
-          assert.equal(imageFileType._filterByFileType("video/webm"), false);
-        });
+        test( "should return false when filtering by image and the content type is a webm", function() {
+          assert.equal( imageFileType._filterByFileType( "video/webm" ), false );
+        } );
 
-        test("should return true when filtering by video and the content type is a webm", function() {
-          assert.equal(videoFileType._filterByFileType("video/webm"), true);
-        });
+        test( "should return true when filtering by video and the content type is a webm", function() {
+          assert.equal( videoFileType._filterByFileType( "video/webm" ), true );
+        } );
 
-        test("should return false when filtering by video and the content type is a jpeg", function() {
-          assert.equal(videoFileType._filterByFileType("image/jpeg"), false);
-        });
-      });
-    });
+        test( "should return false when filtering by video and the content type is a jpeg", function() {
+          assert.equal( videoFileType._filterByFileType( "image/jpeg" ), false );
+        } );
+      } );
+    } );
   </script>
 </body>
 </html>

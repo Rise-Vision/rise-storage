@@ -18,376 +18,377 @@
 <script src="../js/rise-storage-data.js"></script>
 
 <script>
+  /* global sinon, suite, test, assert, suiteSetup, suiteTeardown, setup, teardown, folderImage, images, xhr, requests, imagesAndFolders, bucketImage */
 
-  var cacheFolder = document.querySelector("#cache-folder"),
-    cacheFile = document.querySelector("#cache-file"),
-    invalidFolder = document.querySelector("#cache-folder-invalid"),
-    display = "abc123";
+  var cacheFolder = document.querySelector( "#cache-folder" ),
+    cacheFile = document.querySelector( "#cache-file" ),
+    invalidFolder = document.querySelector( "#cache-folder-invalid" ),
+    display = "abc123",
+    instances = [ cacheFolder, cacheFile, invalidFolder ],
+    i;
 
-  var instances = [cacheFolder, cacheFile, invalidFolder];
-
-  for (var i = 0; i < instances.length; i += 1) {
+  for ( i = 0; i < instances.length; i += 1 ) {
     // mock logger getting display id from Rise Cache
-    sinon.stub(instances[i].$.logger.$.displayId, "generateRequest", function() {
-      instances[i].$.logger._onDisplayIdResponse(null, {response: {displayId: display}});
-    });
+    sinon.stub( instances[ i ].$.logger.$.displayId, "generateRequest", function() {
+      instances[ i ].$.logger._onDisplayIdResponse( null, { response: { displayId: display } } );
+    } );
   }
 
-  suite("rise-storage", function() {
+  suite( "rise-storage", function() {
     var responded,
       listener,
       clock,
       suffix = "?alt=media",
       modeSuffix = "&mode=";
 
-    suiteSetup(function() {
-      xhr = sinon.useFakeXMLHttpRequest();
+    suiteSetup( function() {
+      xhr = sinon.useFakeXMLHttpRequest(); // eslint-disable-line no-global-assign
 
-      xhr.onCreate = function (xhr) {
-        requests.push(xhr);
+      xhr.onCreate = function( xhr ) {
+        requests.push( xhr );
       };
 
       clock = sinon.useFakeTimers();
-    });
+    } );
 
-    suiteTeardown(function() {
+    suiteTeardown( function() {
       xhr.restore();
       clock.restore();
-    });
+    } );
 
-    setup(function() {
-      requests = [];
+    setup( function() {
+      requests = []; // eslint-disable-line no-global-assign
       responded = false;
-    });
+    } );
 
-    suite("Rise Cache", function() {
+    suite( "Rise Cache", function() {
       var localImages;
 
-      suiteSetup(function () {
+      suiteSetup( function() {
         cacheFolder._reset();
         cacheFolder._isCacheRunning = true;
-        localImages = JSON.parse(JSON.stringify(images));
-      });
+        localImages = JSON.parse( JSON.stringify( images ) );
+      } );
 
-      teardown(function() {
-        images = localImages;
-        cacheFolder.removeEventListener("rise-storage-response", listener);
-      });
+      teardown( function() {
+        images = localImages; // eslint-disable-line no-global-assign
+        cacheFolder.removeEventListener( "rise-storage-response", listener );
+      } );
 
-      test("should return the correct URLs for files in a folder", function(done) {
-        var files = [];
+      test( "should return the correct URLs for files in a folder", function( done ) {
+        var files = [],
+          listener = function( response ) {
+            files.push( response.detail );
 
-        var listener = function(response) {
-          files.push(response.detail);
+            if ( files.length === 3 ) {
+              responded = true;
+              assert.equal( files[ 0 ].name, "images%2Fhome.jpg" );
+              assert.equal( files[ 1 ].name, "images%2Fcircle.png" );
+              assert.equal( files[ 2 ].name, "images%2Fmy-image.bmp" );
+              assert.equal( files[ 0 ].url, "//localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fhome.jpg%3Falt%3Dmedia" );
+              assert.equal( files[ 1 ].url, "//localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fcircle.png%3Falt%3Dmedia" );
+              assert.equal( files[ 2 ].url, "//localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fmy-image.bmp%3Falt%3Dmedia" );
+            }
+          };
 
-          if(files.length === 3) {
-            responded = true;
-            assert.equal(files[0].name, "images%2Fhome.jpg");
-            assert.equal(files[1].name, "images%2Fcircle.png");
-            assert.equal(files[2].name, "images%2Fmy-image.bmp");
-            assert.equal(files[0].url, "//localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fhome.jpg%3Falt%3Dmedia");
-            assert.equal(files[1].url, "//localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fcircle.png%3Falt%3Dmedia");
-            assert.equal(files[2].url, "//localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fmy-image.bmp%3Falt%3Dmedia");
-          }
-        };
+        cacheFolder.addEventListener( "rise-storage-response", listener );
+        cacheFolder._handleStorageFolder( images );
 
-        cacheFolder.addEventListener("rise-storage-response", listener);
-        cacheFolder._handleStorageFolder(images);
-
-        assert.isTrue(responded);
+        assert.isTrue( responded );
         done();
-      });
+      } );
 
-      test("should return URLs even if none of the files have changed", function(done) {
+      test( "should return URLs even if none of the files have changed", function( done ) {
         listener = sinon.spy();
 
-        cacheFolder.addEventListener("rise-storage-response", listener);
-        cacheFolder._handleStorageFolder(images);
+        cacheFolder.addEventListener( "rise-storage-response", listener );
+        cacheFolder._handleStorageFolder( images );
 
-        assert.equal(listener.callCount, 3);
+        assert.equal( listener.callCount, 3 );
         done();
-      });
+      } );
 
-      test("should return new URL if a file has changed", function(done) {
-        listener = function(response) {
-          if (response.detail.changed) {
+      test( "should return new URL if a file has changed", function( done ) {
+        listener = function( response ) {
+          if ( response.detail.changed ) {
             responded = true;
-            assert.equal(response.detail.name, "images%2Fcircle.png");
-            assert.equal(response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fcircle.png%3Falt%3Dmedia");
+            assert.equal( response.detail.name, "images%2Fcircle.png" );
+            assert.equal( response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fcircle.png%3Falt%3Dmedia" );
           }
         };
 
-        images.files[2].etag = "new";
-        cacheFolder.addEventListener("rise-storage-response", listener);
-        cacheFolder._handleStorageFolder(images);
+        images.files[ 2 ].etag = "new";
+        cacheFolder.addEventListener( "rise-storage-response", listener );
+        cacheFolder._handleStorageFolder( images );
 
-        assert.isTrue(responded);
+        assert.isTrue( responded );
         done();
-      });
+      } );
 
-      test("should return URL of a file that has been added to a folder", function(done) {
-        listener = function(response) {
-          if (response.detail.added) {
+      test( "should return URL of a file that has been added to a folder", function( done ) {
+        listener = function( response ) {
+          if ( response.detail.added ) {
             responded = true;
-            assert.equal(response.detail.name, "images%2Fgolf.svg");
-            assert.equal(response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
+            assert.equal( response.detail.name, "images%2Fgolf.svg" );
+            assert.equal( response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia" );
           }
         };
 
-        images.files.push({
+        images.files.push( {
           "name": "images/golf.svg",
           "contentType": "image/svg+xml",
           "updated": "2015-01-30T08:19:09.263Z",
           "selfLink": "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg",
           "etag": "CPjC1qHc7MQCEAE="
-        });
-        cacheFolder.addEventListener("rise-storage-response", listener);
-        cacheFolder._handleStorageFolder(images);
+        } );
+        cacheFolder.addEventListener( "rise-storage-response", listener );
+        cacheFolder._handleStorageFolder( images );
 
-        assert.isTrue(responded);
+        assert.isTrue( responded );
         done();
-      });
+      } );
 
-      test("should return URL of a file that has been removed from a folder", function(done) {
-        listener = function(response) {
-          if (response.detail.deleted) {
+      test( "should return URL of a file that has been removed from a folder", function( done ) {
+        listener = function( response ) {
+          if ( response.detail.deleted ) {
             responded = true;
-            assert.equal(response.detail.name, "images%2Fgolf.svg");
-            assert.equal(response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
-            cacheFolder.removeEventListener("rise-storage-response", listener);
+            assert.equal( response.detail.name, "images%2Fgolf.svg" );
+            assert.equal( response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia" );
+            cacheFolder.removeEventListener( "rise-storage-response", listener );
           }
         };
 
         images.files.pop();
-        cacheFolder.addEventListener("rise-storage-response", listener);
-        cacheFolder._handleStorageFolder(images);
+        cacheFolder.addEventListener( "rise-storage-response", listener );
+        cacheFolder._handleStorageFolder( images );
 
-        assert.isTrue(responded);
-        images.files[2].etag = "CMiEudSn2MMCEAs=";
+        assert.isTrue( responded );
+        images.files[ 2 ].etag = "CMiEudSn2MMCEAs=";
         done();
-      });
+      } );
 
       cacheFolder._files = [];
-    });
+    } );
 
-    suite("_computeStorageUrl", function() {
-      suiteSetup(function () {
+    suite( "_computeStorageUrl", function() {
+      suiteSetup( function() {
         cacheFolder._reset();
         cacheFolder._isCacheRunning = true;
-      });
+      } );
 
-      test("should correctly set Storage request URL to send request to rise cache", function () {
+      test( "should correctly set Storage request URL to send request to rise cache", function() {
         cacheFolder._computeStorageUrl();
-        assert.equal(cacheFolder.$.storage.url, "//localhost:9494/metadata/?url=https%3A%2F%2Fstorage-dot-rvaserver2.appspot.com%2F_ah%2Fapi%2Fstorage%2Fv0.01%2Ffiles%3FcompanyId%3Dabc123%26folder%3Dimages%2F");
-      });
-    });
+        assert.equal( cacheFolder.$.storage.url, "//localhost:9494/metadata/?url=https%3A%2F%2Fstorage-dot-rvaserver2.appspot.com%2F_ah%2Fapi%2Fstorage%2Fv0.01%2Ffiles%3FcompanyId%3Dabc123%26folder%3Dimages%2F" );
+      } );
+    } );
 
-    suite("_getFileFromCache", function() {
-      setup(function() {
+    suite( "_getFileFromCache", function() {
+      setup( function() {
         cacheFile._reset();
         cacheFile._fileUrl = "http://url.to.my.file";
-      });
+      } );
 
-      test("should correctly set the cache request method to HEAD", function() {
+      test( "should correctly set the cache request method to HEAD", function() {
         cacheFile._getFileFromCache();
-        assert.equal(cacheFile._cacheRequestMethod, "HEAD");
-        assert.equal(cacheFile._hasAttemptedGetRequest, false);
-      });
+        assert.equal( cacheFile._cacheRequestMethod, "HEAD" );
+        assert.equal( cacheFile._hasAttemptedGetRequest, false );
+      } );
 
-      test("should correctly set the cache URL", function() {
+      test( "should correctly set the cache URL", function() {
         cacheFile._isLoading = true;
         cacheFile._getFileFromCache();
-        assert.equal(cacheFile._cacheUrl, "//localhost:9494/files?url=http://url.to.my.file");
-      });
-    });
+        assert.equal( cacheFile._cacheUrl, "//localhost:9494/files?url=http://url.to.my.file" );
+      } );
+    } );
 
-    suite("_getFilesFromCache", function() {
+    suite( "_getFilesFromCache", function() {
       var spy;
 
-      setup(function () {
-        spy = sinon.spy(cacheFolder, "_requestCacheFolderFile");
-      });
+      setup( function() {
+        spy = sinon.spy( cacheFolder, "_requestCacheFolderFile" );
+      } );
 
-      teardown(function () {
+      teardown( function() {
         cacheFolder._requestCacheFolderFile.restore();
-      });
+      } );
 
-      test("should correctly set number of total files in a folder", function() {
-        cacheFolder._getFilesFromCache(images);
-        assert.equal(cacheFolder._totalFiles, 3);
-      });
+      test( "should correctly set number of total files in a folder", function() {
+        cacheFolder._getFilesFromCache( images );
+        assert.equal( cacheFolder._totalFiles, 3 );
+      } );
 
-      test("should correctly set number of total files in a folder with subfolders", function() {
-        cacheFolder._getFilesFromCache(imagesAndFolders);
-        assert.equal(cacheFolder._totalFiles, 2);
-      });
+      test( "should correctly set number of total files in a folder with subfolders", function() {
+        cacheFolder._getFilesFromCache( imagesAndFolders );
+        assert.equal( cacheFolder._totalFiles, 2 );
+      } );
 
-      test("should correctly set list of items in a folder to request", function () {
-        cacheFolder._getFilesFromCache(images);
-        assert.deepEqual(cacheFolder._folderFilesToRequest, images.files.slice(1));
-      });
+      test( "should correctly set list of items in a folder to request", function() {
+        cacheFolder._getFilesFromCache( images );
+        assert.deepEqual( cacheFolder._folderFilesToRequest, images.files.slice( 1 ) );
+      } );
 
-      test("should correctly request for first item in folder file list", function () {
-        cacheFolder._getFilesFromCache(images);
-        assert(spy.calledWith(images.files[1]));
-      });
+      test( "should correctly request for first item in folder file list", function() {
+        cacheFolder._getFilesFromCache( images );
+        assert( spy.calledWith( images.files[ 1 ] ) );
+      } );
 
-      test("should fire rise-storage-folder-invalid if no valid files exist in folder", function() {
+      test( "should fire rise-storage-folder-invalid if no valid files exist in folder", function() {
         var errorSpy = sinon.spy();
 
-        invalidFolder.addEventListener("rise-storage-folder-invalid", errorSpy);
-        invalidFolder._handleStorageFolder(images);
+        invalidFolder.addEventListener( "rise-storage-folder-invalid", errorSpy );
+        invalidFolder._handleStorageFolder( images );
 
-        assert(errorSpy.calledOnce);
-      });
+        assert( errorSpy.calledOnce );
+      } );
 
-    });
+    } );
 
-    suite("_requestCacheFolderFile", function () {
+    suite( "_requestCacheFolderFile", function() {
 
-      test("should correctly set the cache request method to HEAD", function() {
-        cacheFolder._requestCacheFolderFile(images.files[0]);
-        assert.equal(cacheFolder._cacheRequestMethod, "HEAD");
-        assert.equal(cacheFolder._hasAttemptedGetRequest, false);
-      });
-    });
+      test( "should correctly set the cache request method to HEAD", function() {
+        cacheFolder._requestCacheFolderFile( images.files[ 0 ] );
+        assert.equal( cacheFolder._cacheRequestMethod, "HEAD" );
+        assert.equal( cacheFolder._hasAttemptedGetRequest, false );
+      } );
+    } );
 
-    suite("_handleCacheFile", function() {
+    suite( "_handleCacheFile", function() {
 
-      test("should get the file url from the xhr.responseURL", function(done) {
-        var url = "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia";
-        var resp = {
-          xhr: {
-            responseURL: url,
-            getResponseHeader: function (attribute) {
-              if(attribute === "Location") {
-                return null;
-              } else{
-                return "Fri, 01 May 2015 15:32:11 GMT";
+      test( "should get the file url from the xhr.responseURL", function( done ) {
+        var url = "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia",
+          resp = {
+            xhr: {
+              responseURL: url,
+              getResponseHeader: function( attribute ) {
+                if ( attribute === "Location" ) {
+                  return null;
+                } else {
+                  return "Fri, 01 May 2015 15:32:11 GMT";
+                }
               }
             }
-          }
-        };
+          };
 
-        listener = function(response) {
-          if (response.detail.added) {
+        listener = function( response ) {
+          if ( response.detail.added ) {
             responded = true;
-            assert.equal(response.detail.name, "images%2Fgolf.svg");
-            assert.equal(response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
-            cacheFile.removeEventListener("rise-storage-response", listener);
+            assert.equal( response.detail.name, "images%2Fgolf.svg" );
+            assert.equal( response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia" );
+            cacheFile.removeEventListener( "rise-storage-response", listener );
           }
         };
 
-        cacheFile.addEventListener("rise-storage-response", listener);
+        cacheFile.addEventListener( "rise-storage-response", listener );
         cacheFile._isLoading = true;
-        cacheFile._handleCacheFile(resp);
+        cacheFile._handleCacheFile( resp );
 
-        assert.isTrue(responded);
+        assert.isTrue( responded );
         done();
-      });
+      } );
 
-      test("should fallback to get the file url from the 'Location' header attribute", function(done) {
-        var url = "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia";
-        var resp = {
-          xhr: {
-            getResponseHeader: function (attribute) {
-              if(attribute === "Location") {
-                return url;
-              } else{
-                return "Fri, 01 May 2015 15:32:11 GMT";
+      test( "should fallback to get the file url from the 'Location' header attribute", function( done ) {
+        var url = "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia",
+          resp = {
+            xhr: {
+              getResponseHeader: function( attribute ) {
+                if ( attribute === "Location" ) {
+                  return url;
+                } else {
+                  return "Fri, 01 May 2015 15:32:11 GMT";
+                }
               }
             }
-          }
-        };
+          };
 
-        listener = function(response) {
-          if (response.detail.added) {
+        listener = function( response ) {
+          if ( response.detail.added ) {
             responded = true;
-            assert.equal(response.detail.name, "images%2Fgolf.svg");
-            assert.equal(response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
-            cacheFile.removeEventListener("rise-storage-response", listener);
+            assert.equal( response.detail.name, "images%2Fgolf.svg" );
+            assert.equal( response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia" );
+            cacheFile.removeEventListener( "rise-storage-response", listener );
           }
         };
 
-        cacheFile.addEventListener("rise-storage-response", listener);
+        cacheFile.addEventListener( "rise-storage-response", listener );
         cacheFile._isLoading = true;
-        cacheFile._handleCacheFile(resp);
+        cacheFile._handleCacheFile( resp );
 
-        assert.isTrue(responded);
+        assert.isTrue( responded );
         done();
-      });
+      } );
 
-      test("should get the file url from the this._cacheUrl", function(done) {
-        var url = "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia";
-        var resp = {
-          xhr: {
-            responseURL: null,
-            getResponseHeader: function (attribute) {
-              if(attribute === "Location") {
-                return null;
-              } else{
-                return "Fri, 01 May 2015 15:32:11 GMT";
+      test( "should get the file url from the this._cacheUrl", function( done ) {
+        var url = "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia",
+          resp = {
+            xhr: {
+              responseURL: null,
+              getResponseHeader: function( attribute ) {
+                if ( attribute === "Location" ) {
+                  return null;
+                } else {
+                  return "Fri, 01 May 2015 15:32:11 GMT";
+                }
               }
             }
-          }
-        };
+          };
 
-        listener = function(response) {
-          if (response.detail.added) {
+        listener = function( response ) {
+          if ( response.detail.added ) {
             responded = true;
-            assert.equal(response.detail.name, "images%2Fgolf.svg");
-            assert.equal(response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
-            cacheFile.removeEventListener("rise-storage-response", listener);
+            assert.equal( response.detail.name, "images%2Fgolf.svg" );
+            assert.equal( response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia" );
+            cacheFile.removeEventListener( "rise-storage-response", listener );
           }
         };
 
         cacheFile._cacheUrl = url;
         cacheFile._isLoading = true;
-        cacheFile.addEventListener("rise-storage-response", listener);
-        cacheFile._handleCacheFile(resp);
+        cacheFile.addEventListener( "rise-storage-response", listener );
+        cacheFile._handleCacheFile( resp );
 
-        assert.isTrue(responded);
+        assert.isTrue( responded );
         done();
-      });
-    });
+      } );
+    } );
 
-    suite("_handleCacheFolder", function() {
+    suite( "_handleCacheFolder", function() {
 
-      test("should fallback to get the file url from the 'Location' header attribute", function(done) {
-        var url = "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia";
-        var resp = {
-          xhr: {
-            getResponseHeader: function (attribute) {
-              if(attribute === "Location") {
-                return url;
-              } else{
-                return "Fri, 01 May 2015 15:32:11 GMT";
+      test( "should fallback to get the file url from the 'Location' header attribute", function( done ) {
+        var url = "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia",
+          resp = {
+            xhr: {
+              getResponseHeader: function( attribute ) {
+                if ( attribute === "Location" ) {
+                  return url;
+                } else {
+                  return "Fri, 01 May 2015 15:32:11 GMT";
+                }
               }
             }
-          }
-        };
+          };
 
-        listener = function(response) {
-          if (response.detail.added) {
+        listener = function( response ) {
+          if ( response.detail.added ) {
             responded = true;
-            assert.equal(response.detail.name, "images%2Fgolf.svg");
-            assert.equal(response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia");
-            cacheFolder.removeEventListener("rise-storage-response", listener);
+            assert.equal( response.detail.name, "images%2Fgolf.svg" );
+            assert.equal( response.detail.url, "//localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fgolf.svg%3Falt%3Dmedia" );
+            cacheFolder.removeEventListener( "rise-storage-response", listener );
           }
         };
 
-        cacheFolder.addEventListener("rise-storage-response", listener);
-        cacheFolder._handleCacheFolder(resp);
+        cacheFolder.addEventListener( "rise-storage-response", listener );
+        cacheFolder._handleCacheFolder( resp );
 
-        assert.isTrue(responded);
+        assert.isTrue( responded );
         done();
-      });
-    });
+      } );
+    } );
 
-    suite("_handleCacheError", function() {
-      var event, resp;
+    suite( "_handleCacheError", function() {
+      var event,
+        resp;
 
-      setup(function() {
+      setup( function() {
         event = {
           detail: {
             request: {
@@ -405,387 +406,390 @@
             "statusText": "An error occurred"
           }
         };
-      });
+      } );
 
-      test("should retry Rise Cache request with GET method if it fails the first time", function(done) {
-        var listener = function(response) {
+      test( "should retry Rise Cache request with GET method if it fails the first time", function( done ) {
+        var listener = function() {
           responded = true;
-          cacheFile.removeEventListener("rise-cache-error", listener);
+          cacheFile.removeEventListener( "rise-cache-error", listener );
         };
 
         cacheFile._hasAttemptedGetRequest = false;
-        cacheFile.addEventListener("rise-cache-error", listener);
-        cacheFile._handleCacheError(event, resp);
-        assert.isFalse(responded);
-        assert.equal(cacheFile._cacheRequestMethod, "GET");
+        cacheFile.addEventListener( "rise-cache-error", listener );
+        cacheFile._handleCacheError( event, resp );
+        assert.isFalse( responded );
+        assert.equal( cacheFile._cacheRequestMethod, "GET" );
         done();
-      });
+      } );
 
-      test("should fire rise-cache-error if there is a problem with the Rise Cache request for a folder", function(done) {
-        var listener = function(response) {
+      test( "should fire rise-cache-error if there is a problem with the Rise Cache request for a folder", function( done ) {
+        var listener = function() {
           responded = true;
-          cacheFolder.removeEventListener("rise-cache-error", listener);
+          cacheFolder.removeEventListener( "rise-cache-error", listener );
         };
 
         cacheFolder._isFile = false;
         cacheFolder._hasAttemptedGetRequest = true;
-        cacheFolder.addEventListener("rise-cache-error", listener);
-        cacheFolder._handleCacheError(event, resp);
-        assert.isTrue(responded);
+        cacheFolder.addEventListener( "rise-cache-error", listener );
+        cacheFolder._handleCacheError( event, resp );
+        assert.isTrue( responded );
         done();
-      });
+      } );
 
-      test("should not fire rise-cache-error if there is a problem with the Rise Cache request for a file", function(done) {
-        var listener = function(response) {
+      test( "should not fire rise-cache-error if there is a problem with the Rise Cache request for a file", function( done ) {
+        var listener = function() {
           responded = true;
-          cacheFile.removeEventListener("rise-cache-error", listener);
+          cacheFile.removeEventListener( "rise-cache-error", listener );
         };
 
         cacheFile._hasAttemptedGetRequest = true;
-        cacheFile.addEventListener("rise-cache-error", listener);
-        cacheFile._handleCacheError(event, resp);
-        assert.isFalse(responded);
+        cacheFile.addEventListener( "rise-cache-error", listener );
+        cacheFile._handleCacheError( event, resp );
+        assert.isFalse( responded );
 
         done();
-      });
+      } );
 
-      test("should go out to Rise Storage if Rise Cache returns a 502", function(done) {
-        var spy = sinon.spy(cacheFile, "getMetadata");
+      test( "should go out to Rise Storage if Rise Cache returns a 502", function( done ) {
+        var spy = sinon.spy( cacheFile, "getMetadata" );
 
         cacheFile._hasAttemptedGetRequest = true;
-        cacheFile._handleCacheError(event, resp);
-        assert.equal(spy.callCount, 1);
+        cacheFile._handleCacheError( event, resp );
+        assert.equal( spy.callCount, 1 );
         spy.restore();
 
         done();
-      });
+      } );
 
-      test("should go out to Rise Storage if Rise Cache returns a 534", function(done) {
-        var spy = sinon.spy(cacheFile, "getMetadata");
+      test( "should go out to Rise Storage if Rise Cache returns a 534", function( done ) {
+        var spy = sinon.spy( cacheFile, "getMetadata" );
 
         event.detail.request.xhr.response.status = 534;
         cacheFile._hasAttemptedGetRequest = true;
-        cacheFile._handleCacheError(event, resp);
-        assert.equal(spy.callCount, 1);
+        cacheFile._handleCacheError( event, resp );
+        assert.equal( spy.callCount, 1 );
         spy.restore();
 
         done();
-      });
+      } );
 
-    });
+    } );
 
-    suite("_handlePingResponse", function() {
-      teardown(function() {
+    suite( "_handlePingResponse", function() {
+      teardown( function() {
         cacheFile._totalPingRequests = 0;
-      });
+      } );
 
-      test("should increment ping request count and execute _handlePingRetry if ping response is an empty string", function() {
-        var retryStub = sinon.stub(cacheFile, "_handlePingRetry");
+      test( "should increment ping request count and execute _handlePingRetry if ping response is an empty string", function() {
+        var retryStub = sinon.stub( cacheFile, "_handlePingRetry" );
 
-        cacheFile._handlePingResponse({}, { "response": "" });
+        cacheFile._handlePingResponse( {}, { "response": "" } );
 
-        assert.equal(cacheFile._isCacheRunning, false);
-        assert.equal(cacheFile._pingReceived, true);
-        assert.equal(cacheFile._totalPingRequests, 1, "incremented total ping requests");
-        assert.isTrue(retryStub.calledWith({ "response": "" }), "calling _handlePingRetry and providing response");
+        assert.equal( cacheFile._isCacheRunning, false );
+        assert.equal( cacheFile._pingReceived, true );
+        assert.equal( cacheFile._totalPingRequests, 1, "incremented total ping requests" );
+        assert.isTrue( retryStub.calledWith( { "response": "" } ), "calling _handlePingRetry and providing response" );
 
         retryStub.restore();
-      });
+      } );
 
-      test("should correctly set _isCacheRunning and _pingReceived if ping response is not an empty string", function() {
-        cacheFile._handlePingResponse({}, { "response": {name: "rise-cache-v2", version: "1.0.0"} });
-        assert.equal(cacheFile._isCacheRunning, true);
-        assert.equal(cacheFile._pingReceived, true);
-      });
-    });
+      test( "should correctly set _isCacheRunning and _pingReceived if ping response is not an empty string", function() {
+        cacheFile._handlePingResponse( {}, { "response": { name: "rise-cache-v2", version: "1.0.0" } } );
+        assert.equal( cacheFile._isCacheRunning, true );
+        assert.equal( cacheFile._pingReceived, true );
+      } );
+    } );
 
-    suite("_handlePingError", function() {
-      teardown(function() {
+    suite( "_handlePingError", function() {
+      teardown( function() {
         cacheFile._totalPingRequests = 0;
-      });
+      } );
 
-      test("should increment ping request count and execute _handlePingRetry", function() {
+      test( "should increment ping request count and execute _handlePingRetry", function() {
         var resp = {
+            "xhr": {
+              "status": 404,
+              "statusText": "An error occurred"
+            }
+          },
+          retryStub = sinon.stub( cacheFile, "_handlePingRetry" );
+
+        cacheFile._handlePingError( {}, resp );
+
+        assert.equal( cacheFile._totalPingRequests, 1, "incremented total ping requests" );
+        assert.isTrue( retryStub.calledWith( resp ), "calling _handlePingRetry and providing response" );
+
+        retryStub.restore();
+      } );
+    } );
+
+    suite( "_handlePingRetry", function() {
+      var resp = {
           "xhr": {
             "status": 404,
             "statusText": "An error occurred"
           }
         },
-          retryStub = sinon.stub(cacheFile, "_handlePingRetry");
-
-        cacheFile._handlePingError({}, resp);
-
-        assert.equal(cacheFile._totalPingRequests, 1, "incremented total ping requests");
-        assert.isTrue(retryStub.calledWith(resp), "calling _handlePingRetry and providing response");
-
-        retryStub.restore();
-      });
-    });
-
-    suite("_handlePingRetry", function() {
-      var resp = {
-        "xhr": {
-          "status": 404,
-          "statusText": "An error occurred"
-        }
-      },
         processStub;
 
-      teardown(function() {
+      teardown( function() {
         processStub.restore();
         cacheFile.displayid = "";
-      });
+      } );
 
-      test("should execute _processCacheNotRunning immediately when player is not running", function() {
-        processStub = sinon.stub(cacheFile, "_processCacheNotRunning");
+      test( "should execute _processCacheNotRunning immediately when player is not running", function() {
+        processStub = sinon.stub( cacheFile, "_processCacheNotRunning" );
 
         cacheFile.displayid = "preview";
-        cacheFile._handlePingRetry(resp);
-        assert.isTrue(processStub.calledWith(resp,false));
-      });
+        cacheFile._handlePingRetry( resp );
+        assert.isTrue( processStub.calledWith( resp, false ) );
+      } );
 
-      test("should retry and ping rise cache 3 times in 30 second intervals when running in player", function(done) {
-        sinon.stub(cacheFile.$.ping, "generateRequest", function() {
+      test( "should retry and ping rise cache 3 times in 30 second intervals when running in player", function( done ) {
+        sinon.stub( cacheFile.$.ping, "generateRequest", function() {
           // mock ping error
-          cacheFile._handlePingError(null, resp);
+          cacheFile._handlePingError( null, resp );
           // simulate 30 seconds
-          clock.tick(30000);
-        });
+          clock.tick( 30000 );
+        } );
 
-        processStub = sinon.stub(cacheFile, "_processCacheNotRunning", function(response, isPlayerRunning) {
-          assert.equal(cacheFile._totalPingRequests, 3);
-          assert.deepEqual(resp, response);
-          assert.isTrue(isPlayerRunning);
+        processStub = sinon.stub( cacheFile, "_processCacheNotRunning", function( response, isPlayerRunning ) {
+          assert.equal( cacheFile._totalPingRequests, 3 );
+          assert.deepEqual( resp, response );
+          assert.isTrue( isPlayerRunning );
 
           cacheFile.$.ping.generateRequest.restore();
           done();
-        });
+        } );
 
         cacheFile.displayid = "abc123";
-        cacheFile._handlePingRetry(resp);
+        cacheFile._handlePingRetry( resp );
         // simulate 30 seconds
-        clock.tick(30000);
+        clock.tick( 30000 );
 
-      });
+      } );
 
-    });
+    } );
 
-    suite("_processCacheNotRunning", function() {
+    suite( "_processCacheNotRunning", function() {
       var resp = {
-        "xhr": {
-          "status": 404,
-          "statusText": "An error occurred"
-        }
-      },
-        goStub, startTimerStub;
+          "xhr": {
+            "status": 404,
+            "statusText": "An error occurred"
+          }
+        },
+        goStub,
+        startTimerStub;
 
-      setup(function() {
+      setup( function() {
         cacheFile.displayid = "abc123";
         cacheFile._isCacheRunning = true;
         cacheFile._pingReceived = false;
         cacheFile._totalPingRequests = 3;
-        goStub = sinon.stub(cacheFile, "go");
-        startTimerStub = sinon.stub(cacheFile, "_startTimer");
-      });
+        goStub = sinon.stub( cacheFile, "go" );
+        startTimerStub = sinon.stub( cacheFile, "_startTimer" );
+      } );
 
-      teardown(function() {
+      teardown( function() {
         cacheFile._isCacheRunning = false;
         cacheFile._pingReceived = false;
         cacheFile._totalPingRequests = 0;
         cacheFile.displayid = "";
         goStub.restore();
         startTimerStub.restore();
-      });
+      } );
 
-      test("should fire 'rise-cache-not-running` event with correct params", function(done) {
-        var listener = function(response) {
-          cacheFile.removeEventListener("rise-cache-not-running", listener);
+      test( "should fire 'rise-cache-not-running` event with correct params", function( done ) {
+        var listener = function( response ) {
+          cacheFile.removeEventListener( "rise-cache-not-running", listener );
 
-          assert.isTrue(response.detail.isPlayerRunning);
-          assert.deepEqual(response.detail.resp, resp);
+          assert.isTrue( response.detail.isPlayerRunning );
+          assert.deepEqual( response.detail.resp, resp );
 
           done();
         };
 
-        cacheFile.addEventListener("rise-cache-not-running", listener);
-        cacheFile._processCacheNotRunning(resp, true);
+        cacheFile.addEventListener( "rise-cache-not-running", listener );
+        cacheFile._processCacheNotRunning( resp, true );
 
-        assert.equal(cacheFile._isCacheRunning, false);
-        assert.equal(cacheFile._pingReceived, true);
-        assert.equal(cacheFile._totalPingRequests, 0);
-      });
+        assert.equal( cacheFile._isCacheRunning, false );
+        assert.equal( cacheFile._pingReceived, true );
+        assert.equal( cacheFile._totalPingRequests, 0 );
+      } );
 
-      test("should execute _startTimer() if running in player", function() {
-        cacheFile._processCacheNotRunning(resp, true);
+      test( "should execute _startTimer() if running in player", function() {
+        cacheFile._processCacheNotRunning( resp, true );
 
-        assert.equal(goStub.callCount, 0, "go() correctly not called");
-        assert.isTrue(startTimerStub.calledOnce, "_startTimer() correctly called");
-      });
+        assert.equal( goStub.callCount, 0, "go() correctly not called" );
+        assert.isTrue( startTimerStub.calledOnce, "_startTimer() correctly called" );
+      } );
 
-      test("should execute go() if not running in player", function() {
+      test( "should execute go() if not running in player", function() {
         cacheFile.displayid = "preview";
         cacheFile._isCacheRunning = false;
 
-        cacheFile._processCacheNotRunning(resp, false);
+        cacheFile._processCacheNotRunning( resp, false );
 
-        assert.isTrue(goStub.calledOnce, "go() correctly called");
-        assert.equal(startTimerStub.callCount, 0, "_startTimer() correctly not called");
-      });
+        assert.isTrue( goStub.calledOnce, "go() correctly called" );
+        assert.equal( startTimerStub.callCount, 0, "_startTimer() correctly not called" );
+      } );
 
-    });
+    } );
 
-    suite("_startTimer", function() {
+    suite( "_startTimer", function() {
       var timerSpy;
 
-      teardown(function () {
-        if (timerSpy) { timerSpy.restore(); }
-      });
+      teardown( function() {
+        if ( timerSpy ) {
+          timerSpy.restore();
+        }
+      } );
 
-      teardown(function() {
+      teardown( function() {
         cacheFile.displayid = "";
         cacheFolder.displayid = "";
-      });
+      } );
 
-      test("should correctly set refresh interval", function() {
+      test( "should correctly set refresh interval", function() {
         cacheFolder.refresh = 10;
         cacheFolder._startTimer();
-        assert.equal(cacheFolder.refresh, 10);
-      });
+        assert.equal( cacheFolder.refresh, 10 );
+      } );
 
-      test("should enforce a minimum refresh interval", function() {
+      test( "should enforce a minimum refresh interval", function() {
         cacheFolder.refresh = 1;
         cacheFolder._startTimer();
-        assert.equal(cacheFolder.refresh, 5);
-      });
+        assert.equal( cacheFolder.refresh, 5 );
+      } );
 
-      test("should not execute any timer if Rise Cache is not running and component not running in player", function() {
-        timerSpy = sinon.spy(cacheFile.$.ping, "generateRequest");
+      test( "should not execute any timer if Rise Cache is not running and component not running in player", function() {
+        timerSpy = sinon.spy( cacheFile.$.ping, "generateRequest" );
 
         cacheFile._isCacheRunning = false;
         cacheFile.refresh = 5;
         cacheFile._startTimer();
 
-        clock.tick(300000);
-        assert.equal(timerSpy.callCount, 0);
-      });
+        clock.tick( 300000 );
+        assert.equal( timerSpy.callCount, 0 );
+      } );
 
-      test("should execute timer if Rise Cache is not running but component is running in player", function() {
-        timerSpy = sinon.spy(cacheFile.$.ping, "generateRequest");
+      test( "should execute timer if Rise Cache is not running but component is running in player", function() {
+        timerSpy = sinon.spy( cacheFile.$.ping, "generateRequest" );
 
         cacheFile._isCacheRunning = false;
         cacheFile.displayid = "abc123";
         cacheFile.refresh = 5;
         cacheFile._startTimer();
 
-        clock.tick(300000);
-        assert.isTrue(timerSpy.calledOnce);
-      });
+        clock.tick( 300000 );
+        assert.isTrue( timerSpy.calledOnce );
+      } );
 
-      test("should check for changes to a file", function() {
-        timerSpy = sinon.spy(cacheFile.$.ping, "generateRequest");
+      test( "should check for changes to a file", function() {
+        timerSpy = sinon.spy( cacheFile.$.ping, "generateRequest" );
 
         cacheFile._isCacheRunning = true;
         cacheFile.refresh = 5;
         cacheFile._startTimer();
 
-        clock.tick(300000);
-        assert(timerSpy.calledOnce);
-      });
+        clock.tick( 300000 );
+        assert( timerSpy.calledOnce );
+      } );
 
-      test("should check for changes to a folder", function() {
-        timerSpy = sinon.spy(cacheFolder.$.ping, "generateRequest");
+      test( "should check for changes to a folder", function() {
+        timerSpy = sinon.spy( cacheFolder.$.ping, "generateRequest" );
 
         cacheFolder._isFile = false;
         cacheFolder._startTimer();
 
-        clock.tick(300000);
-        assert(timerSpy.calledOnce);
-      });
-    });
+        clock.tick( 300000 );
+        assert( timerSpy.calledOnce );
+      } );
+    } );
 
-    suite("_setFileUrl", function() {
+    suite( "_setFileUrl", function() {
 
-      suiteTeardown(function() {
+      suiteTeardown( function() {
         cacheFile.displayid = "";
         cacheFolder.displayid = "";
-      });
+      } );
 
-      test("should correctly set fileUrl for a file in the root of the bucket when Rise Cache is running", function() {
+      test( "should correctly set fileUrl for a file in the root of the bucket when Rise Cache is running", function() {
         cacheFile._isCacheRunning = true;
-        cacheFile._setFileUrl(bucketImage);
-        assert.equal(cacheFile._fileUrl, "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg");
-      });
+        cacheFile._setFileUrl( bucketImage );
+        assert.equal( cacheFile._fileUrl, "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fhome.jpg" );
+      } );
 
-      test("should correctly set _fileUrl for a file in a folder when Rise Cache is running", function() {
+      test( "should correctly set _fileUrl for a file in a folder when Rise Cache is running", function() {
         cacheFolder._isCacheRunning = true;
-        cacheFolder._setFileUrl(folderImage);
-        assert.equal(cacheFolder._fileUrl, "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg");
-      });
+        cacheFolder._setFileUrl( folderImage );
+        assert.equal( cacheFolder._fileUrl, "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" );
+      } );
 
-      test("should correctly set fileUrl for a file in the root of the bucket when Rise Cache is not running and in player", function() {
+      test( "should correctly set fileUrl for a file in the root of the bucket when Rise Cache is not running and in player", function() {
         cacheFile._isCacheRunning = false;
         cacheFile.displayid = "def456";
-        cacheFile._setFileUrl(bucketImage);
-        assert.equal(cacheFile._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg" + suffix + modeSuffix + "no-rc");
-      });
+        cacheFile._setFileUrl( bucketImage );
+        assert.equal( cacheFile._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg" + suffix + modeSuffix + "no-rc" );
+      } );
 
-      test("should correctly set fileUrl for a file in the root of the bucket when Rise Cache is not running and in preview", function() {
+      test( "should correctly set fileUrl for a file in the root of the bucket when Rise Cache is not running and in preview", function() {
         cacheFile._isCacheRunning = false;
         cacheFile.displayid = "preview";
-        cacheFile._setFileUrl(bucketImage);
-        assert.equal(cacheFile._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg" + suffix + modeSuffix + "preview");
-      });
+        cacheFile._setFileUrl( bucketImage );
+        assert.equal( cacheFile._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg" + suffix + modeSuffix + "preview" );
+      } );
 
-      test("should correctly set fileUrl for a file in a folder when Rise Cache is not running and in player", function() {
+      test( "should correctly set fileUrl for a file in a folder when Rise Cache is not running and in player", function() {
         cacheFolder._isCacheRunning = false;
         cacheFolder.displayid = "def456";
-        cacheFolder._setFileUrl(folderImage);
-        assert.equal(cacheFolder._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg" + suffix + modeSuffix + "no-rc");
-      });
+        cacheFolder._setFileUrl( folderImage );
+        assert.equal( cacheFolder._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg" + suffix + modeSuffix + "no-rc" );
+      } );
 
-      test("should correctly set fileUrl for a file in a folder when Rise Cache is not running and in preview", function() {
+      test( "should correctly set fileUrl for a file in a folder when Rise Cache is not running and in preview", function() {
         cacheFolder._isCacheRunning = false;
         cacheFolder.displayid = "preview";
-        cacheFolder._setFileUrl(folderImage);
-        assert.equal(cacheFolder._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg" + suffix + modeSuffix + "preview");
-      });
-    });
+        cacheFolder._setFileUrl( folderImage );
+        assert.equal( cacheFolder._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg" + suffix + modeSuffix + "preview" );
+      } );
+    } );
 
-    suite("getMetadata", function() {
-      test("should request Storage metadata", function() {
-        var spy = sinon.spy(cacheFile, "_getStorageSubscription");
+    suite( "getMetadata", function() {
+      test( "should request Storage metadata", function() {
+        var spy = sinon.spy( cacheFile, "_getStorageSubscription" );
 
         cacheFile.getMetadata();
 
-        assert(spy.calledOnce);
-      });
-    });
+        assert( spy.calledOnce );
+      } );
+    } );
 
-    suite("_removeHandledFile", function() {
-      test("should remove item from _folderFilesToRequest after it has been handled to the widget", function() {
-        cacheFolder._folderFilesToRequest = images.files.slice(1);
-        cacheFolder._removeHandledFile("images%2Fhome.jpg");
-        assert.deepEqual(cacheFolder._folderFilesToRequest, images.files.slice(2));
-      });
-    });
+    suite( "_removeHandledFile", function() {
+      test( "should remove item from _folderFilesToRequest after it has been handled to the widget", function() {
+        cacheFolder._folderFilesToRequest = images.files.slice( 1 );
+        cacheFolder._removeHandledFile( "images%2Fhome.jpg" );
+        assert.deepEqual( cacheFolder._folderFilesToRequest, images.files.slice( 2 ) );
+      } );
+    } );
 
-    suite("_retryCacheRequestForFolder", function() {
-      test("should clean up variable and call the _requestCacheFolderFile with first file on the list of items", function() {
-        var spy = sinon.spy(cacheFolder, "_requestCacheFolderFile");
+    suite( "_retryCacheRequestForFolder", function() {
+      test( "should clean up variable and call the _requestCacheFolderFile with first file on the list of items", function() {
+        var spy = sinon.spy( cacheFolder, "_requestCacheFolderFile" );
 
-        cacheFolder._folderFilesToRequest = images.files.slice(1);
+        cacheFolder._folderFilesToRequest = images.files.slice( 1 );
         cacheFolder._retryCacheRequestForFolder();
 
-        assert.isFalse(cacheFolder._isFolderFileDownloadingByCache);
-        assert.equal(cacheFolder._numFiles, 0);
-        assert.equal(cacheFolder._folderFilesRequested, 0);
+        assert.isFalse( cacheFolder._isFolderFileDownloadingByCache );
+        assert.equal( cacheFolder._numFiles, 0 );
+        assert.equal( cacheFolder._folderFilesRequested, 0 );
 
-        assert(spy.calledWith(cacheFolder._folderFilesToRequest[0]));
+        assert( spy.calledWith( cacheFolder._folderFilesToRequest[ 0 ] ) );
 
-      });
-    });
+      } );
+    } );
 
-  });
+  } );
 </script>
 </body>
 </html>
