@@ -176,13 +176,6 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
         env: {
           type: String,
           value: "prod"
-        },
-        /**
-         * An optional attribute for Rise Player online/offline state.
-         */
-        playeroffline: {
-          type: Boolean,
-          value: false
         }
       },
 
@@ -602,11 +595,13 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
       },
 
       _handleStorageSubscriptionError: function( e, resp ) {
-        if ( this._isPlayerRunning() && this.playeroffline ) {
+        this.fire( "rise-storage-subscription-error", resp );
+
+        if ( this._isCacheRunning ) {
+          // proceed as if authorized to continue retrieving file(s)
           this._setSubscriptionStatus( true );
           this._makeStorageRequest();
         } else {
-          this.fire( "rise-storage-subscription-error", resp );
           this._startTimer();
         }
       },

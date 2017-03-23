@@ -16,7 +16,7 @@
 
 <script src="../js/rise-storage-data.js"></script>
 <script>
-  /* global sinon, suite, suiteSetup, suiteTeardown, setup, teardown, test, assert, xhr, clock, requests */
+  /* global sinon, suite, suiteSetup, suiteTeardown, setup, test, assert, xhr, clock, requests */
 
   var fileBucket = document.querySelector( "#file-bucket" ),
     fileBucketTest = document.querySelector( "#file-bucket-test" ),
@@ -53,12 +53,6 @@
     } );
 
     suite( "_computeStorageUrl", function() {
-
-      teardown( function() {
-        fileBucket.displayid = "";
-        fileBucket.playeroffline = false;
-      } );
-
       test( "should correctly set Store request URL", function() {
         fileBucket._getStorageSubscription();
         assert.equal( fileBucket.$.storageSubscription.url, "https://store-dot-rvaserver2.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db" );
@@ -127,32 +121,6 @@
         assert.isTrue( responded );
 
         fileBucket._startTimer.restore();
-        done();
-      } );
-
-      test( "should not fire rise-storage-subscription-error if running in player and offline", function( done ) {
-        var requestStub = sinon.stub( fileBucket, "_makeStorageRequest" ),
-          responded = false,
-          response = {
-            "xhr": {
-              "status": 404,
-              "statusText": "An error occurred"
-            }
-          },
-          listener = function() {
-            responded = true;
-            fileBucket.removeEventListener( "rise-storage-subscription-error", listener );
-          };
-
-        fileBucket.displayid = "abc123";
-        fileBucket.playeroffline = true;
-        fileBucket.addEventListener( "rise-storage-subscription-error", listener );
-        fileBucket._handleStorageSubscriptionError( {}, response );
-
-        assert( requestStub.calledOnce );
-        assert.isFalse( responded );
-
-        fileBucket._makeStorageRequest.restore();
         done();
       } );
     } );

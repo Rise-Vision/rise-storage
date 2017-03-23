@@ -650,6 +650,10 @@
         cacheFolder.displayid = "";
       } );
 
+      suiteSetup( function() {
+        cacheFile._isCacheRunning = true;
+      } );
+
       test( "should correctly set refresh interval", function() {
         cacheFolder.refresh = 10;
         cacheFolder._startTimer();
@@ -787,6 +791,38 @@
         assert( spy.calledWith( cacheFolder._folderFilesToRequest[ 0 ] ) );
 
       } );
+    } );
+
+    suite( "_handleStorageSubscriptionError", function() {
+
+      suiteSetup( function() {
+        cacheFile._isCacheRunning = true;
+      } );
+
+      test( "should fire rise-storage-subscription-error and continue with request for files", function( done ) {
+        var requestStub = sinon.stub( cacheFile, "_makeStorageRequest" ),
+          responded = false,
+          response = {
+            "xhr": {
+              "status": 404,
+              "statusText": "An error occurred"
+            }
+          },
+          listener = function() {
+            responded = true;
+            cacheFile.removeEventListener( "rise-storage-subscription-error", listener );
+          };
+
+        cacheFile.addEventListener( "rise-storage-subscription-error", listener );
+        cacheFile._handleStorageSubscriptionError( {}, response );
+
+        assert.isTrue( responded );
+        assert( requestStub.calledOnce );
+
+        cacheFile._makeStorageRequest.restore();
+        done();
+      } );
+
     } );
 
   } );
