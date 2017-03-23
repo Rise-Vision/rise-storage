@@ -1,0 +1,39 @@
+{
+  "name": "rise-storage",
+  "authors": [
+    "Rise Vision"
+  ],
+  "description": "Rise Vision web component for retrieving files from Rise Storage",
+  "main": "rise-storage.html",
+  "keywords": [
+    "polymer",
+    "web-components"
+  ],
+  "license": "GPLv3",
+  "homepage": "https://github.com/Rise-Vision/rise-storage",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "test"
+  ],
+  "dependencies": {
+    "iron-ajax": "PolymerElements/iron-ajax#^1.0.0",
+    "polymer": "Polymer/polymer#^1.0.0",
+    "rise-logger": "https://github.com/Rise-Vision/rise-logger.git#1.0.4",
+    "underscore": "~1.8.3"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "web-component-tester": "*"
+  },
+  "_release": "1b962587cd",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "1b962587cde4db407098de049f5b661e4a354cea"
+  },
+  "_source": "git://github.com/Rise-Vision/rise-storage.git",
+  "_target": "master",
+  "_originalSource": "Rise-Vision/rise-storage",
+  "_direct": true
+}
