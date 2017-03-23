@@ -77,12 +77,12 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
 </dom-module>
 
 <!-- build:version -->
-<script>var sheetVersion = "1.5.0";</script>
+<script>var storageVersion = "1.5.0";</script>
 <!-- endbuild -->
 
 <script>
   ( function() {
-    /* global Polymer, _, sheetVersion */
+    /* global Polymer, _, storageVersion */
 
     "use strict";
 
@@ -459,7 +459,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
           params.usage_type = this.usage;
         }
 
-        params.version = sheetVersion;
+        params.version = storageVersion;
 
         // log usage
         this.$.logger.log( BQ_TABLE_NAME, params );
