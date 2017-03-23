@@ -30,7 +30,7 @@
       .pipe( htmlreplace( {
         "version": {
           src: pkg.version,
-          tpl: "<script>var sheetVersion = \"%s\";</script>"
+          tpl: "<script>var storageVersion = \"%s\";</script>"
         }
       }, { keepBlockTags: true } ) )
       .pipe( gulp.dest( "./" ) );

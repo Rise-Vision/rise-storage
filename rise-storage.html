@@ -77,12 +77,12 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
 </dom-module>
 
 <!-- build:version -->
-<script>var sheetVersion = "1.4.5";</script>
+<script>var storageVersion = "1.5.0";</script>
 <!-- endbuild -->
 
 <script>
   ( function() {
-    /* global Polymer, _, sheetVersion */
+    /* global Polymer, _, storageVersion */
 
     "use strict";
 
@@ -459,7 +459,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
           params.usage_type = this.usage;
         }
 
-        params.version = sheetVersion;
+        params.version = storageVersion;
 
         // log usage
         this.$.logger.log( BQ_TABLE_NAME, params );
@@ -596,7 +596,13 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
 
       _handleStorageSubscriptionError: function( e, resp ) {
         this.fire( "rise-storage-subscription-error", resp );
-        this._startTimer();
+
+        if ( this._isCacheRunning ) {
+          // proceed to try and retrieve file(s)
+          this._makeStorageRequest();
+        } else {
+          this._startTimer();
+        }
       },
 
       /**
