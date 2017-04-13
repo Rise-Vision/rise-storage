@@ -16,6 +16,8 @@
     "**/.*",
     "node_modules",
     "test",
+    "!demo/**/*",
+    "!dist/**/*",
     "*.yml",
     "gulpfile.js",
     "wct.conf.js",
