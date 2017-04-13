@@ -16,13 +16,9 @@
     "**/.*",
     "node_modules",
     "test",
-    "!demo/**/*",
-    "!dist/**/*",
     "*.yml",
     "gulpfile.js",
-    "wct.conf.js",
-    "index.html",
-    "rise-storage.html"
+    "wct.conf.js"
   ],
   "dependencies": {
     "iron-ajax": "PolymerElements/iron-ajax#^1.0.0",
