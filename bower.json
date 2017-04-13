@@ -1,6 +1,6 @@
 {
   "name": "rise-storage",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "authors": [
     "Rise Vision"
   ],
@@ -15,7 +15,12 @@
   "ignore": [
     "**/.*",
     "node_modules",
-    "test"
+    "test",
+    "*.yml",
+    "gulpfile.js",
+    "wct.conf.js",
+    "index.html",
+    "rise-storage.html"
   ],
   "dependencies": {
     "iron-ajax": "PolymerElements/iron-ajax#^1.0.0",
