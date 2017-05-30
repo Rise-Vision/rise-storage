@@ -52,7 +52,7 @@
 
         server = sinon.fakeServer.create();
         server.respondImmediately = true;
-        server.respondWith( "GET", "http://localhost:9494",
+        server.respondWith( "GET", "https://localhost:9494",
           [ 200, header, JSON.stringify( cachePingBody ) ] );
         server.respondWith( "GET", "https://store-dot-rvaserver2.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db",
           [ 200, header, JSON.stringify( subscribedStatus ) ] );
