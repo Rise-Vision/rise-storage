@@ -54,6 +54,9 @@
         server.respondWith( "GET", "https://localhost:9494",
           [ 200, header, JSON.stringify( cachePingBody ) ] );
 
+        server.respondWith( "GET", "http://localhost:9494",
+          [ 200, header, JSON.stringify( cachePingBody ) ] );
+
         // Storage request
         server.respondWith( "GET", "https://store-dot-rvaserver2.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db",
           [ 200, header, JSON.stringify( subscribedStatus ) ] );
@@ -234,6 +237,7 @@
 
           clock = sinon.useFakeTimers();
           cacheFileFolder.addEventListener( "rise-cache-file-unavailable", responseHandler );
+          cacheFileFolder._baseCacheUrl = "https://localhost:9494";
           cacheFileFolder.go();
         } );
 
@@ -259,6 +263,7 @@
         setup( function() {
           folder._isCacheRunning = true;
           folder._pingReceived = true;
+          folder._baseCacheUrl = "https://localhost:9494";
           spy = sinon.spy( folder, "_retryCacheRequestForFolder" );
 
           // Rise Cache request

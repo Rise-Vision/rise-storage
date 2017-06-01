@@ -67,6 +67,8 @@
       suiteSetup( function() {
         cacheFolder._reset();
         cacheFolder._isCacheRunning = true;
+        cacheFolder._baseCacheUrl = "https://localhost:9494";
+        cacheFile._baseCacheUrl = "https://localhost:9494";
         localImages = JSON.parse( JSON.stringify( images ) );
       } );
 
@@ -78,6 +80,7 @@
       test( "should return the correct URLs for files in a folder", function( done ) {
         var files = [],
           listener = function( response ) {
+
             files.push( response.detail );
 
             if ( files.length === 3 ) {
@@ -545,7 +548,7 @@
         assert.isTrue( processStub.calledWith( resp, false ) );
       } );
 
-      test( "should retry and ping rise cache 3 times in 30 second intervals when running in player", function( done ) {
+      test( "should retry and ping rise cache 6 times in 30 second intervals when running in player", function( done ) {
         sinon.stub( cacheFile.$.ping, "generateRequest", function() {
           // mock ping error
           cacheFile._handlePingError( null, resp );
@@ -554,7 +557,8 @@
         } );
 
         processStub = sinon.stub( cacheFile, "_processCacheNotRunning", function( response, isPlayerRunning ) {
-          assert.equal( cacheFile._totalPingRequests, 3 );
+          assert.equal( cacheFile._baseCacheUrl, "http://localhost:9494" );
+          assert.equal( cacheFile._totalPingRequests, 6 );
           assert.deepEqual( resp, response );
           assert.isTrue( isPlayerRunning );
 
