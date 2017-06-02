@@ -12522,14 +12522,14 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
 
           console.log( "[rise-storage v2] Ping Error" ); // eslint-disable-line no-console
         } else {
-          // retry ping in 30 seconds
+          // retry ping in 5 seconds
           this.debounce( "ping", function() {
             if ( this._totalPingRequests >= 3 && this._isHTTPS ) {
               this._baseCacheUrl = "http://localhost:9494";
               this._isHTTPS = false;
             }
             this.$.ping.generateRequest();
-          }, 30000 );
+          }, 5000 );
         }
       },
 

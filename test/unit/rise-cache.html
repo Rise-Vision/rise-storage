@@ -540,20 +540,12 @@
         cacheFile.displayid = "";
       } );
 
-      test( "should execute _processCacheNotRunning immediately when player is not running", function() {
-        processStub = sinon.stub( cacheFile, "_processCacheNotRunning" );
-
-        cacheFile.displayid = "preview";
-        cacheFile._handlePingRetry( resp );
-        assert.isTrue( processStub.calledWith( resp, false ) );
-      } );
-
-      test( "should retry and ping rise cache 6 times in 30 second intervals when running in player", function( done ) {
+      test( "should retry and ping rise cache 6 times in 5 second intervals when running in player", function( done ) {
         sinon.stub( cacheFile.$.ping, "generateRequest", function() {
           // mock ping error
           cacheFile._handlePingError( null, resp );
-          // simulate 30 seconds
-          clock.tick( 30000 );
+          // simulate 5 seconds
+          clock.tick( 5000 );
         } );
 
         processStub = sinon.stub( cacheFile, "_processCacheNotRunning", function( response, isPlayerRunning ) {
