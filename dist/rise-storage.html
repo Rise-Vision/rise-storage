@@ -11334,7 +11334,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
 </dom-module>
 
 <!-- build:version -->
-<script>var storageVersion = "2.0.2";</script>
+<script>var storageVersion = "2.0.3";</script>
 <!-- endbuild -->
 
 <script>
@@ -11738,6 +11738,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
        * An instance of the element was inserted into the DOM.
        */
       attached: function() {
+        this._baseCacheUrl = "https://localhost:9494";
         this.$.ping.generateRequest();
       },
 

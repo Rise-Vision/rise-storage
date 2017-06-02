@@ -77,7 +77,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
 </dom-module>
 
 <!-- build:version -->
-<script>var storageVersion = "2.0.2";</script>
+<script>var storageVersion = "2.0.3";</script>
 <!-- endbuild -->
 
 <script>
@@ -456,6 +456,10 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
        * Polymer has finished its initialization. This is the entry point.
        */
       ready: function() {
+
+        this._baseCacheUrl = "https://localhost:9494";
+        this.$.ping.generateRequest();
+
         var params = {
           event: "ready"
         };
@@ -475,13 +479,6 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
         this.$.logger.log( BQ_TABLE_NAME, params );
 
         this.fire( "rise-storage-ready" );
-      },
-
-      /**
-       * An instance of the element was inserted into the DOM.
-       */
-      attached: function() {
-        this.$.ping.generateRequest();
       },
 
       /***************************************** STORAGE ******************************************/
