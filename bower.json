@@ -1,6 +1,6 @@
 {
   "name": "rise-storage",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "authors": [
     "Rise Vision"
   ],
@@ -23,7 +23,7 @@
   "dependencies": {
     "iron-ajax": "PolymerElements/iron-ajax#^1.0.0",
     "polymer": "Polymer/polymer#^1.0.0",
-    "rise-logger": "https://github.com/Rise-Vision/rise-logger.git#1.0.6",
+    "rise-logger": "https://github.com/Rise-Vision/rise-logger.git#1.0.8",
     "underscore": "~1.8.3"
   },
   "devDependencies": {

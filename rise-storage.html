@@ -77,7 +77,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
 </dom-module>
 
 <!-- build:version -->
-<script>var storageVersion = "2.0.2";</script>
+<script>var storageVersion = "2.0.3";</script>
 <!-- endbuild -->
 
 <script>
@@ -352,7 +352,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
        * @type string
        * @default "//localhost:9494"
        */
-      _baseCacheUrl: "https://localhost:9494",
+      _baseCacheUrl: "https://localhost:9495",
 
       /**
        * Whether or not Rise Cache V2 is running.
@@ -481,6 +481,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
        * An instance of the element was inserted into the DOM.
        */
       attached: function() {
+        this._baseCacheUrl = "https://localhost:9495";
         this.$.ping.generateRequest();
       },
 
@@ -1259,23 +1260,19 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
       },
 
       _handlePingRetry: function( resp ) {
-        if ( this._isPlayerRunning() ) {
-          if ( this._totalPingRequests === 6 ) {
-            this._processCacheNotRunning( resp, true );
+        if ( this._totalPingRequests === 6 ) {
+          this._processCacheNotRunning( resp, true );
 
-            console.log( "[rise-storage v2] Ping Error" ); // eslint-disable-line no-console
-          } else {
-            // retry ping in 30 seconds
-            this.debounce( "ping", function() {
-              if ( this._totalPingRequests >= 3 && this._isHTTPS ) {
-                this._baseCacheUrl = "http://localhost:9494";
-                this._isHTTPS = false;
-              }
-              this.$.ping.generateRequest();
-            }, 30000 );
-          }
+          console.log( "[rise-storage v2] Ping Error" ); // eslint-disable-line no-console
         } else {
-          this._processCacheNotRunning( resp, false );
+          // retry ping in 5 seconds
+          this.debounce( "ping", function() {
+            if ( this._totalPingRequests >= 3 && this._isHTTPS ) {
+              this._baseCacheUrl = "http://localhost:9494";
+              this._isHTTPS = false;
+            }
+            this.$.ping.generateRequest();
+          }, 5000 );
         }
       },
 
