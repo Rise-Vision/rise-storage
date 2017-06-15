@@ -1371,6 +1371,8 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
        * Handles a refresh.
        */
       _startTimer: function() {
+        var baseTimeout = this._isCacheRunning ? 1000 : 60000;
+
         if ( !this._isCacheRunning && !this._isPlayerRunning() ) {
           return;
         }
@@ -1383,7 +1385,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
           this.debounce( "refresh", function() {
             this._hasAttemptedSecondStorageRequest = false;
             this.$.ping.generateRequest();
-          }, this.refresh * 60000 );
+          }, this.refresh * baseTimeout );
         }
       },
 
