@@ -9819,7 +9819,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
 </dom-module>
 
 <!-- build:version -->
-<script>var loggerVersion = "1.0.9";</script>
+<script>var loggerVersion = "1.0.10";</script>
 <!-- endbuild -->
 
 <script>
@@ -10040,9 +10040,13 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
           return;
         }
 
-        if ( top.postToPlayer && top.enableWidgetLogging ) {
-          // send log data to player instead of BQ
-          return this.$.utils.logEventToPlayer( tableName, insertParams );
+        try {
+          if ( top.postToPlayer && top.enableWidgetLogging ) {
+            // send log data to player instead of BQ
+            return this.$.utils.logEventToPlayer( tableName, insertParams );
+          }
+        } catch ( err ) {
+          console.log( "rise-logger.log", err ); // eslint-disable-line no-console
         }
 
         this._throttle = true;
@@ -11632,7 +11636,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
 </dom-module>
 
 <!-- build:version -->
-<script>var storageVersion = "2.0.4";</script>
+<script>var storageVersion = "2.0.5";</script>
 <!-- endbuild -->
 
 <script>
