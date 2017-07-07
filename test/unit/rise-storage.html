@@ -136,6 +136,22 @@
 
       } );
 
+      suite( "_isRiseCacheSchemeEnabled", function() {
+
+        test( "should return false if top window flag doesn't exist", function() {
+          assert.isFalse( fileFolder._isRiseCacheSchemeEnabled() );
+        } );
+
+        test( "should return true if last event is throttled", function() {
+          top.enableRiseCacheScheme = true;
+
+          assert.isTrue( fileFolder._isRiseCacheSchemeEnabled() );
+
+          top.enableRiseCacheScheme = false;
+        } );
+
+      } );
+
       suite( "_computeStorageUrl", function() {
         test( "should correctly set Storage request URL if no companyId attribute is specified", function() {
           noCompany._computeStorageUrl();

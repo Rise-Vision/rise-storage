@@ -77,7 +77,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
 </dom-module>
 
 <!-- build:version -->
-<script>var storageVersion = "2.0.5";</script>
+<script>var storageVersion = "2.0.6";</script>
 <!-- endbuild -->
 
 <script>
@@ -496,6 +496,16 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
           this.displayid !== "preview" &&
           this.displayid !== "display_id" &&
           this.displayid !== "displayId";
+      },
+
+      _isRiseCacheSchemeEnabled: function() {
+        try {
+          if ( top.enableRiseCacheScheme ) {
+            return true;
+          }
+        } catch ( err ) {} // eslint-disable-line no-empty
+
+        return false;
       },
 
       _supportsLocalStorage: function() {
