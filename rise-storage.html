@@ -1275,7 +1275,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
         var protocol = ( this._isRiseCacheSchemeEnabled() ) ? "rchttp://" : "http://";
 
         if ( this._totalPingRequests === 6 ) {
-          this._processCacheNotRunning( resp, true );
+          this._processCacheNotRunning( resp, this._isPlayerRunning() );
 
           console.log( "[rise-storage v2] Ping Error" ); // eslint-disable-line no-console
         } else {
