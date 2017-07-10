@@ -123,6 +123,38 @@
         } );
       } );
 
+      suite( "attached", function() {
+
+        suiteSetup( function() {
+          sinon.stub( bucket.$.ping, "generateRequest" );
+        } );
+
+        suiteTeardown( function() {
+          bucket.$.ping.generateRequest.restore();
+        } );
+
+        test( "should set ping request url to use 'rchttps' scheme", function() {
+          sinon.stub( bucket, "_isRiseCacheSchemeEnabled", function() {
+            return true;
+          } );
+          bucket.attached();
+
+          assert.isTrue( bucket.$.ping.url.startsWith( "rchttps://" ) );
+          bucket._isRiseCacheSchemeEnabled.restore();
+        } );
+
+        test( "should set ping request url to not use 'rchttp' scheme", function() {
+          sinon.stub( bucket, "_isRiseCacheSchemeEnabled", function() {
+            return false;
+          } );
+          bucket.attached();
+
+          assert.isTrue( bucket.$.ping.url.startsWith( "https://" ) );
+          bucket._isRiseCacheSchemeEnabled.restore();
+        } );
+
+      } );
+
       suite( "_isValidUsage", function() {
 
         test( "should return true when 'standalone' or 'widget'", function() {
@@ -132,6 +164,22 @@
 
         test( "should return false when invalid", function() {
           assert.isFalse( fileFolder._isValidUsage( "test" ) );
+        } );
+
+      } );
+
+      suite( "_isRiseCacheSchemeEnabled", function() {
+
+        test( "should return false if top window flag doesn't exist", function() {
+          assert.isFalse( fileFolder._isRiseCacheSchemeEnabled() );
+        } );
+
+        test( "should return true if last event is throttled", function() {
+          top.enableRiseCacheScheme = true;
+
+          assert.isTrue( fileFolder._isRiseCacheSchemeEnabled() );
+
+          top.enableRiseCacheScheme = false;
         } );
 
       } );

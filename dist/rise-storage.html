@@ -9819,7 +9819,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
 </dom-module>
 
 <!-- build:version -->
-<script>var loggerVersion = "1.0.10";</script>
+<script>var loggerVersion = "1.0.11";</script>
 <!-- endbuild -->
 
 <script>
@@ -9893,6 +9893,18 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
         return this._throttle && ( this._lastEvent === event );
       },
 
+      _isRiseCacheSchemeEnabled: function() {
+        try {
+          if ( top.enableRiseCacheScheme ) {
+            return true;
+          }
+        } catch ( err ) {
+          console.log( "rise-logger._isRiseCacheSchemeEnabled", err ); // eslint-disable-line no-console
+        }
+
+        return false;
+      },
+
       _getInsertHeaders: function( token ) {
         return {
           "Content-Type": "application/json",
@@ -9957,7 +9969,9 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
       },
 
       _retryDisplayIdHttp: function() {
-        this._displayIdBaseUrl = "http://localhost:9494/displays";
+        var protocol = ( this._isRiseCacheSchemeEnabled() ) ? "rchttp://" : "http://";
+
+        this._displayIdBaseUrl = protocol + "localhost:9494/displays";
         this._retriedHttp = true;
         this.$.displayId.generateRequest();
       },
@@ -10000,7 +10014,9 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
        * An instance of the element was inserted into the DOM.
        */
       attached: function() {
-        this._displayIdBaseUrl = "https://localhost:9495/displays";
+        var protocol = ( this._isRiseCacheSchemeEnabled() ) ? "rchttps://" : "https://";
+
+        this._displayIdBaseUrl = protocol + "localhost:9495/displays";
         // request the display id from Rise Cache
         this.$.displayId.generateRequest();
       },
@@ -11636,7 +11652,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
 </dom-module>
 
 <!-- build:version -->
-<script>var storageVersion = "2.0.5";</script>
+<script>var storageVersion = "2.0.6";</script>
 <!-- endbuild -->
 
 <script>
@@ -12040,7 +12056,9 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
        * An instance of the element was inserted into the DOM.
        */
       attached: function() {
-        this._baseCacheUrl = "https://localhost:9495";
+        var protocol = ( this._isRiseCacheSchemeEnabled() ) ? "rchttps://" : "https://";
+
+        this._baseCacheUrl = protocol + "localhost:9495";
         this.$.ping.generateRequest();
       },
 
@@ -12055,6 +12073,16 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
           this.displayid !== "preview" &&
           this.displayid !== "display_id" &&
           this.displayid !== "displayId";
+      },
+
+      _isRiseCacheSchemeEnabled: function() {
+        try {
+          if ( top.enableRiseCacheScheme ) {
+            return true;
+          }
+        } catch ( err ) {} // eslint-disable-line no-empty
+
+        return false;
       },
 
       _supportsLocalStorage: function() {
@@ -12103,7 +12131,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
           subscriptionStatus = this._getCachedSubscriptionStatus();
 
           if ( !subscriptionStatus || this._hasPassedTwentyFourHours( subscriptionStatus.timestamp ) ) {
-            this._makeStorageSusbscriptionRequest();
+            this._makeStorageSubscriptionRequest();
           } else {
             if ( subscriptionStatus.status ) {
               this._makeStorageRequest();
@@ -12113,7 +12141,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
           }
         } else {
           if ( this._isLoading ) {
-            this._makeStorageSusbscriptionRequest();
+            this._makeStorageSubscriptionRequest();
           } else {
             if ( this._isSubscribed ) {
               this._makeStorageRequest();
@@ -12122,7 +12150,34 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
         }
       },
 
-      _makeStorageSusbscriptionRequest: function() {
+      _makeStorageSubscriptionFetch: function( url ) {
+        var init = {
+            method: "GET",
+            mode: "cors",
+            cache: "no-cache"
+          },
+          req = new Request( url, init ),
+          that = this;
+
+        fetch( req ).then( function( response ) {
+          if ( response.ok ) {
+            return Promise.resolve( response );
+          } else {
+            return Promise.reject( new Error( JSON.stringify( {
+              status: response.status,
+              statusText: "The request failed with status code: " + response.status
+            } ) ) );
+          }
+        } ).then( function( response ) {
+          return response.json();
+        } ).then( function( json ) {
+          that._handleStorageSubscriptionResponse( new Event( "" ), { response: json } );
+        } ).catch( function( error ) {
+          that._handleStorageSubscriptionFetchError( error );
+        } );
+      },
+
+      _makeStorageSubscriptionRequest: function() {
         var productionUrl,
           testingUrl,
           serverUrl,
@@ -12135,8 +12190,12 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
             serverUrl = ( this.env !== "test" ? productionUrl : testingUrl ),
             url = serverUrl + "/v1/widget/auth?cid=" + encodeURIComponent( this.companyid ) + "&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db";
 
-          this.$.storageSubscription.url = url;
-          this.$.storageSubscription.generateRequest();
+          if ( this._isRiseCacheSchemeEnabled() ) {
+            this._makeStorageSubscriptionFetch( url );
+          } else {
+            this.$.storageSubscription.url = url;
+            this.$.storageSubscription.generateRequest();
+          }
         }
       },
 
@@ -12162,6 +12221,21 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
             this._fireStorageSubscriptionError();
           }
         }
+      },
+
+      _handleStorageSubscriptionFetchError: function( error ) {
+        var resp = { error: { currentTarget: { status: 0 } } },
+          fetchResponse = {};
+
+        try {
+          fetchResponse = JSON.parse( error.message );
+        } catch ( err ) {} // eslint-disable-line no-empty
+
+        if ( fetchResponse.status ) {
+          resp.error.currentTarget.status = fetchResponse.status;
+        }
+
+        this._handleStorageSubscriptionError( new Event( "" ), resp );
       },
 
       _handleStorageSubscriptionError: function( e, resp ) {
@@ -12819,15 +12893,17 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
       },
 
       _handlePingRetry: function( resp ) {
+        var protocol = ( this._isRiseCacheSchemeEnabled() ) ? "rchttp://" : "http://";
+
         if ( this._totalPingRequests === 6 ) {
-          this._processCacheNotRunning( resp, true );
+          this._processCacheNotRunning( resp, this._isPlayerRunning() );
 
           console.log( "[rise-storage v2] Ping Error" ); // eslint-disable-line no-console
         } else {
           // retry ping in 5 seconds
           this.debounce( "ping", function() {
             if ( this._totalPingRequests >= 3 && this._isHTTPS ) {
-              this._baseCacheUrl = "http://localhost:9494";
+              this._baseCacheUrl = protocol + "localhost:9494";
               this._isHTTPS = false;
             }
             this.$.ping.generateRequest();
