@@ -538,6 +538,8 @@
       teardown( function() {
         processStub.restore();
         cacheFile.displayid = "";
+        cacheFile._totalPingRequests = 0;
+        cacheFile._isHTTPS = true;
       } );
 
       test( "should retry and ping rise cache 6 times in 5 second intervals when running in player", function( done ) {
@@ -563,6 +565,31 @@
         // simulate 30 seconds
         clock.tick( 30000 );
 
+      } );
+
+      test( "should set ping request url to use 'rchttp' scheme", function( done ) {
+        sinon.stub( cacheFile, "_isRiseCacheSchemeEnabled", function() {
+          return true;
+        } );
+
+        sinon.stub( cacheFile.$.ping, "generateRequest", function() {
+          // mock ping error
+          cacheFile._handlePingError( null, resp );
+          // simulate 5 seconds
+          clock.tick( 5000 );
+        } );
+
+        processStub = sinon.stub( cacheFile, "_processCacheNotRunning", function() {
+          assert.isTrue( cacheFile._baseCacheUrl.startsWith( "rchttp://" ) );
+
+          cacheFile.$.ping.generateRequest.restore();
+          cacheFile._isRiseCacheSchemeEnabled.restore();
+
+          done();
+        } );
+
+        cacheFile._handlePingRetry( resp );
+        clock.tick( 30000 );
       } );
 
     } );

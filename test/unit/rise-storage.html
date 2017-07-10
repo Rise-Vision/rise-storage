@@ -123,6 +123,38 @@
         } );
       } );
 
+      suite( "attached", function() {
+
+        suiteSetup( function() {
+          sinon.stub( bucket.$.ping, "generateRequest" );
+        } );
+
+        suiteTeardown( function() {
+          bucket.$.ping.generateRequest.restore();
+        } );
+
+        test( "should set ping request url to use 'rchttps' scheme", function() {
+          sinon.stub( bucket, "_isRiseCacheSchemeEnabled", function() {
+            return true;
+          } );
+          bucket.attached();
+
+          assert.isTrue( bucket.$.ping.url.startsWith( "rchttps://" ) );
+          bucket._isRiseCacheSchemeEnabled.restore();
+        } );
+
+        test( "should set ping request url to not use 'rchttp' scheme", function() {
+          sinon.stub( bucket, "_isRiseCacheSchemeEnabled", function() {
+            return false;
+          } );
+          bucket.attached();
+
+          assert.isTrue( bucket.$.ping.url.startsWith( "https://" ) );
+          bucket._isRiseCacheSchemeEnabled.restore();
+        } );
+
+      } );
+
       suite( "_isValidUsage", function() {
 
         test( "should return true when 'standalone' or 'widget'", function() {
