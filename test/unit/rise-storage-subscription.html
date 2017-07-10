@@ -16,7 +16,7 @@
 
 <script src="../js/rise-storage-data.js"></script>
 <script>
-  /* global sinon, suite, suiteSetup, suiteTeardown, setup, test, assert, xhr, clock, requests */
+  /* global sinon, suite, suiteSetup, suiteTeardown, setup, test, assert, xhr, clock, requests, teardown */
 
   var fileBucket = document.querySelector( "#file-bucket" ),
     fileBucketTest = document.querySelector( "#file-bucket-test" ),
@@ -52,76 +52,149 @@
       requests = []; // eslint-disable-line no-global-assign
     } );
 
-    suite( "_computeStorageUrl", function() {
-      test( "should correctly set Store request URL", function() {
-        fileBucket._getStorageSubscription();
-        assert.equal( fileBucket.$.storageSubscription.url, "https://store-dot-rvaserver2.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db" );
+    suite( "subscription", function() {
+
+      suite( "_getStorageSubscription", function() {
+        test( "should correctly set Store request URL", function() {
+          fileBucket._getStorageSubscription();
+          assert.equal( fileBucket.$.storageSubscription.url, "https://store-dot-rvaserver2.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db" );
+        } );
+
+        test( "should correctly set Test Store request URL", function() {
+          fileBucketTest._getStorageSubscription();
+          assert.equal( fileBucketTest.$.storageSubscription.url, "https://store-dot-rvacore-test.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db" );
+        } );
+
       } );
 
-      test( "should correctly set Test Store request URL", function() {
-        fileBucketTest._getStorageSubscription();
-        assert.equal( fileBucketTest.$.storageSubscription.url, "https://store-dot-rvacore-test.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db" );
+      suite( "_handleStorageSubscriptionResponse", function() {
+        test( "should fire rise-storage-subscription-expired if subscription is expired", function( done ) {
+          var startTimerSpy = sinon.spy( fileBucket, "_startTimer" ),
+            expiredResponse = { response:
+              { "authorized": false, "expiry": null, "signatures": null, "error": { "message": "Subscription is not active." } }
+            },
+            responded = false,
+            listener = function() {
+              responded = true;
+              fileBucket.removeEventListener( "rise-storage-subscription-expired", listener );
+            };
+
+          fileBucket.addEventListener( "rise-storage-subscription-expired", listener );
+          fileBucket._handleStorageSubscriptionResponse( null, expiredResponse );
+
+          assert( startTimerSpy.calledOnce );
+          assert.isTrue( responded );
+
+          fileBucket._startTimer.restore();
+          done();
+        } );
+
+        test( "should not fire rise-storage-subscription-expired if subscription is not expired", function( done ) {
+          var expiredResponse = { response:
+              { "authorized": true, "expiry": "2016-04-26T08:17:59.059+0000", "signatures": null, "error": null }
+            },
+            responded = false,
+            listener = function() {
+              responded = true;
+              fileBucket.removeEventListener( "rise-storage-subscription-expired", listener );
+            };
+
+          fileBucket.addEventListener( "rise-storage-subscription-expired", listener );
+          fileBucket._handleStorageSubscriptionResponse( null, expiredResponse );
+
+          assert.isFalse( responded );
+          done();
+        } );
       } );
 
-      test( "should fire rise-storage-subscription-expired if subscription is expired", function( done ) {
-        var startTimerSpy = sinon.spy( fileBucket, "_startTimer" ),
-          expiredResponse = { response:
-            { "authorized": false, "expiry": null, "signatures": null, "error": { "message": "Subscription is not active." } }
-          },
-          responded = false,
-          listener = function() {
-            responded = true;
-            fileBucket.removeEventListener( "rise-storage-subscription-expired", listener );
-          };
+      suite( "_makeStorageSubscriptionRequest", function() {
+        var requestStub,
+          fetchStub;
 
-        fileBucket.addEventListener( "rise-storage-subscription-expired", listener );
-        fileBucket._handleStorageSubscriptionResponse( null, expiredResponse );
+        setup( function() {
+          requestStub = sinon.stub( fileBucket.$.storageSubscription, "generateRequest" );
+          fetchStub = sinon.stub( fileBucket, "_makeStorageSubscriptionFetch" );
+        } );
 
-        assert( startTimerSpy.calledOnce );
-        assert.isTrue( responded );
+        teardown( function() {
+          requestStub.restore();
+          fetchStub.restore();
+        } );
 
-        fileBucket._startTimer.restore();
-        done();
+        test( "should use iron-ajax to request to Store API", function() {
+          fileBucket._makeStorageSubscriptionRequest();
+
+          assert.isTrue( requestStub.calledOnce );
+          assert.equal( fetchStub.callCount, 0 );
+        } );
+
+        test( "should use Fetch to request to Store API", function() {
+          sinon.stub( fileBucket, "_isRiseCacheSchemeEnabled", function() {
+            return true;
+          } );
+
+          fileBucket._makeStorageSubscriptionRequest();
+
+          assert.equal( requestStub.callCount, 0 );
+          assert.isTrue( fetchStub.calledOnce );
+
+          fileBucket._isRiseCacheSchemeEnabled.restore();
+        } );
+
       } );
 
-      test( "should not fire rise-storage-subscription-expired if subscription is not expired", function( done ) {
-        var expiredResponse = { response:
-            { "authorized": true, "expiry": "2016-04-26T08:17:59.059+0000", "signatures": null, "error": null }
-          },
-          responded = false,
-          listener = function() {
-            responded = true;
-            fileBucket.removeEventListener( "rise-storage-subscription-expired", listener );
-          };
+      suite( "_handleStorageSubscriptionError", function() {
 
-        fileBucket.addEventListener( "rise-storage-subscription-expired", listener );
-        fileBucket._handleStorageSubscriptionResponse( null, expiredResponse );
+        test( "should fire rise-storage-subscription-error if there is an error on the call to get subscription status", function( done ) {
+          var startTimerSpy = sinon.spy( fileBucket, "_startTimer" ),
+            responded = false,
+            response = {
+              "xhr": {
+                "status": 404,
+                "statusText": "An error occurred"
+              }
+            },
+            listener = function() {
+              responded = true;
+              fileBucket.removeEventListener( "rise-storage-subscription-error", listener );
+            };
 
-        assert.isFalse( responded );
-        done();
+          fileBucket.addEventListener( "rise-storage-subscription-error", listener );
+          fileBucket._handleStorageSubscriptionError( {}, response );
+          assert( startTimerSpy.calledOnce );
+          assert.isTrue( responded );
+
+          fileBucket._startTimer.restore();
+          done();
+        } );
+
       } );
 
-      test( "should fire rise-storage-subscription-error if there is an error on the call to get subscription status", function( done ) {
-        var startTimerSpy = sinon.spy( fileBucket, "_startTimer" ),
-          responded = false,
-          response = {
-            "xhr": {
-              "status": 404,
-              "statusText": "An error occurred"
-            }
-          },
-          listener = function() {
-            responded = true;
-            fileBucket.removeEventListener( "rise-storage-subscription-error", listener );
-          };
+      suite( "_handleStorageSubscriptionFetchError", function() {
+        var handleErrorStub;
 
-        fileBucket.addEventListener( "rise-storage-subscription-error", listener );
-        fileBucket._handleStorageSubscriptionError( {}, response );
-        assert( startTimerSpy.calledOnce );
-        assert.isTrue( responded );
+        setup( function() {
+          handleErrorStub = sinon.stub( fileBucket, "_handleStorageSubscriptionError" );
+        } );
 
-        fileBucket._startTimer.restore();
-        done();
+        teardown( function() {
+          handleErrorStub.restore();
+        } );
+
+        test( "should call _handleStorageSubscriptionError with correct response structure and status ", function( ) {
+          fileBucket._handleStorageSubscriptionFetchError( new Error( JSON.stringify( {
+            status: 500,
+            statusText: "The request failed with status code: 500"
+          } ) ) );
+
+          assert.isTrue( handleErrorStub.calledWith( new Event( "" ), { error: { currentTarget: { status: 500 } } } ) );
+        } );
+
+        test( "should call _handleStorageSubscriptionError with correct response structure and empty status ", function() {
+          fileBucket._handleStorageSubscriptionFetchError( new Error( "No connection" ) );
+
+          assert.isTrue( handleErrorStub.calledWith( new Event( "" ), { error: { currentTarget: { status: 0 } } } ) );
+        } );
       } );
     } );
   } );
