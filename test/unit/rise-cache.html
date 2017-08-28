@@ -723,6 +723,20 @@
       test( "should correctly set _fileUrl for a file in a folder when Rise Cache is running", function() {
         cacheFolder._isCacheRunning = true;
         cacheFolder._setFileUrl( folderImage );
+        assert.equal( cacheFolder._fileUrl, "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" );
+      } );
+
+      test( "should correctly set _fileUrl for a file in a folder when Rise Cache version 1.7.1 is running ", function() {
+        cacheFolder._isCacheRunning = true;
+        cacheFolder._rcVersionNumber = "1.7.1";
+        cacheFolder._setFileUrl( folderImage );
+        assert.equal( cacheFolder._fileUrl, "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%2Fhome.jpg" );
+      } );
+
+      test( "should correctly set _fileUrl for a file in a folder when Rise Cache version is greater than 1.7.1 is running ", function() {
+        cacheFolder._isCacheRunning = true;
+        cacheFolder._rcVersionNumber = "1.7.2";
+        cacheFolder._setFileUrl( folderImage );
         assert.equal( cacheFolder._fileUrl, "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%2Fhome.jpg" );
       } );
 

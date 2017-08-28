@@ -5,7 +5,7 @@
 var header = { "Content-Type": "application/json" },
   cachePingBody = {
     "name": "rise-cache-v2",
-    "version": "0.0.0"
+    "version": "1.7.2"
   },
   images = {
     "result": true,
