@@ -77,7 +77,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
 </dom-module>
 
 <!-- build:version -->
-<script>var storageVersion = "2.0.7";</script>
+<script>var storageVersion = "2.0.8";</script>
 <!-- endbuild -->
 
 <script>
@@ -1247,6 +1247,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
             this._numberOfCacheErrors++;
             this.getMetadata();
           } else {
+            this._numberOfCacheErrors = 0;
             this._startTimer();
             this.fire( "rise-cache-error", resp );
           }

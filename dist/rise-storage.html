@@ -11334,7 +11334,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
 </dom-module>
 
 <!-- build:version -->
-<script>var storageVersion = "2.0.7";</script>
+<script>var storageVersion = "2.0.8";</script>
 <!-- endbuild -->
 
 <script>
@@ -12504,6 +12504,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
             this._numberOfCacheErrors++;
             this.getMetadata();
           } else {
+            this._numberOfCacheErrors = 0;
             this._startTimer();
             this.fire( "rise-cache-error", resp );
           }
