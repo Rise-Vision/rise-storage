@@ -453,10 +453,26 @@
         done();
       } );
 
+      test( "should fire rise-cache-error if there is a problem with the Rise Cache request for a file after 3 attempts", function( done ) {
+        var listener = function() {
+          responded = true;
+          cacheFile.removeEventListener( "rise-cache-error", listener );
+        };
+
+        cacheFile._hasAttemptedGetRequest = true;
+        cacheFile._numberOfCacheErrors = 3;
+        cacheFile.addEventListener( "rise-cache-error", listener );
+        cacheFile._handleCacheError( event, resp );
+        assert.isTrue( responded );
+
+        done();
+      } );
+
       test( "should go out to Rise Storage if Rise Cache returns a 502", function( done ) {
         var spy = sinon.spy( cacheFile, "getMetadata" );
 
         cacheFile._hasAttemptedGetRequest = true;
+        cacheFile._numberOfCacheErrors = 0;
         cacheFile._handleCacheError( event, resp );
         assert.equal( spy.callCount, 1 );
         spy.restore();
@@ -468,6 +484,7 @@
         var spy = sinon.spy( cacheFile, "getMetadata" );
 
         event.detail.request.xhr.response.status = 534;
+        cacheFile._numberOfCacheErrors = 0;
         cacheFile._hasAttemptedGetRequest = true;
         cacheFile._handleCacheError( event, resp );
         assert.equal( spy.callCount, 1 );

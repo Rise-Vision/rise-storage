@@ -460,9 +460,16 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
       /**
        * RC Version number that contains encoding
        * @property RC_VERSION_WITH_ENCODE
-       * @default ""
+       * @default "1.7.1"
        */
       _RC_VERSION_WITH_ENCODE: "1.7.1",
+
+      /**
+       * Count how many times the cache request returned with error
+       * @property _numberOfCacheErrors
+       * @default 0
+       */
+      _numberOfCacheErrors: 0,
 
       /************************************** INITIALIZATION **************************************/
 
@@ -1236,7 +1243,8 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
           status = e.detail.request.xhr.response.status;
 
           // Get metadata for single file on Rise Cache server error.
-          if ( ( ( status === 502 ) || ( status === 534 ) ) && this._isFile ) {
+          if ( ( ( status === 502 ) || ( status === 534 ) ) && this._isFile && this._numberOfCacheErrors < 3 ) {
+            this._numberOfCacheErrors++;
             this.getMetadata();
           } else {
             this._startTimer();
