@@ -190,8 +190,8 @@
         assert.equal( cacheFolder.$.storage.url, "https://localhost:9494/metadata/?url=https%3A%2F%2Fstorage-dot-rvaserver2.appspot.com%2F_ah%2Fapi%2Fstorage%2Fv0.01%2Ffiles%3FcompanyId%3Dabc123%26folder%3Dimages%2F" );
       } );
 
-      test( "should correctly set Storage request URL to send request to rise cache version greater than 1.7.4", function() {
-        cacheFolder._rcVersionNumber = "1.7.5";
+      test( "should correctly set Storage request URL to send request to rise cache version greater than 1.7.3", function() {
+        cacheFolder._rcVersionNumber = "1.7.4";
         cacheFolder._computeStorageUrl();
         assert.equal( cacheFolder.$.storage.url, "https://localhost:9494/metadata/?url=https://storage-dot-rvaserver2.appspot.com/_ah/api/storage/v0.01/files?companyId=abc123&folder=images/" );
       } );
@@ -751,6 +751,7 @@
 
       test( "should correctly set _fileUrl for a file in a folder when Rise Cache is running", function() {
         cacheFolder._isCacheRunning = true;
+        cacheFolder._rcVersionNumber = "1.7.2"
         cacheFolder._setFileUrl( folderImage );
         assert.equal( cacheFolder._fileUrl, "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" );
       } );

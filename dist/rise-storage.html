@@ -11719,7 +11719,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
        * @property RC_VERSION_WITH_ENCODE
        * @default "1.7.1"
        */
-      _RC_VERSION_WITH_ENCODE: "1.7.4",
+      _RC_VERSION_WITH_ENCODE: "1.7.3",
 
       /**
        * Count how many times the cache request returned with error
@@ -11926,7 +11926,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
           }
 
           if ( this._isCacheRunning ) {
-            if ( this._compareVersionNumbers( this._rcVersionNumber, this._RC_VERSION_WITH_ENCODE ) >= 0 ) {
+            if ( this._compareVersionNumbers( this._rcVersionNumber, this._RC_VERSION_WITH_ENCODE ) > 0 ) {
               url = this._baseCacheUrl + "/metadata/?url=" + url;
             } else {
               url = this._baseCacheUrl + "/metadata/?url=" + encodeURIComponent( url );
