@@ -61,7 +61,7 @@
       responded = false;
     } );
 
-    suite( "Rise Cache", function() {
+    /*suite( "Rise Cache", function() {
       var localImages;
 
       suiteSetup( function() {
@@ -85,17 +85,17 @@
 
             if ( files.length === 3 ) {
               responded = true;
-              assert.equal( files[ 0 ].name, "images%2Fhome.jpg" );
-              assert.equal( files[ 1 ].name, "images%2Fcircle.png" );
-              assert.equal( files[ 2 ].name, "images%2Fmy-image.bmp" );
-              assert.equal( files[ 0 ].url, "https://localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fhome.jpg%3Falt%3Dmedia" );
-              assert.equal( files[ 1 ].url, "https://localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fcircle.png%3Falt%3Dmedia" );
-              assert.equal( files[ 2 ].url, "https://localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fmy-image.bmp%3Falt%3Dmedia" );
+              assert.equal( files[ 0 ].name, "images/home.jpg" );
+              assert.equal( files[ 1 ].name, "images/circle.png" );
+              assert.equal( files[ 2 ].name, "images/my-image.bmp" );
+              assert.equal( files[ 0 ].url, "https://localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%2Fhome.jpg?alt&media" );
+              assert.equal( files[ 1 ].url, "https://localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%2Fcircle.png?alt&media" );
+              assert.equal( files[ 2 ].url, "https://localhost:9494/files/?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%2Fmy-image.bmp?alt&media" );
             }
           };
 
         cacheFolder.addEventListener( "rise-storage-response", listener );
-        cacheFolder._handleStorageFolder( images );
+        cacheFolder._getFilesFromCache( images );
 
         assert.isTrue( responded );
         done();
@@ -115,7 +115,7 @@
         listener = function( response ) {
           if ( response.detail.changed ) {
             responded = true;
-            assert.equal( response.detail.name, "images%2Fcircle.png" );
+            assert.equal( response.detail.name, "images/circle.png" );
             assert.equal( response.detail.url, "https://localhost:9494/files?url=https%3A%2F%2Fwww.googleapis.com%2Fstorage%2Fv1%2Fb%2Frisemedialibrary-abc123%2Fo%2Fimages%252Fcircle.png%3Falt%3Dmedia" );
           }
         };
@@ -171,17 +171,29 @@
       } );
 
       cacheFolder._files = [];
-    } );
+    } );*/
 
     suite( "_computeStorageUrl", function() {
       suiteSetup( function() {
         cacheFolder._reset();
         cacheFolder._isCacheRunning = true;
+        cacheFolder._baseCacheUrl = "https://localhost:9494";
+        cacheFile._baseCacheUrl = "https://localhost:9494";
+      } );
+
+      teardown( function() {
+        cacheFolder._rcVersionNumber = "1.7.3";
       } );
 
       test( "should correctly set Storage request URL to send request to rise cache", function() {
         cacheFolder._computeStorageUrl();
         assert.equal( cacheFolder.$.storage.url, "https://localhost:9494/metadata/?url=https%3A%2F%2Fstorage-dot-rvaserver2.appspot.com%2F_ah%2Fapi%2Fstorage%2Fv0.01%2Ffiles%3FcompanyId%3Dabc123%26folder%3Dimages%2F" );
+      } );
+
+      test( "should correctly set Storage request URL to send request to rise cache version greater than 1.7.3", function() {
+        cacheFolder._rcVersionNumber = "1.7.4";
+        cacheFolder._computeStorageUrl();
+        assert.equal( cacheFolder.$.storage.url, "https://localhost:9494/metadata/?url=https://storage-dot-rvaserver2.appspot.com/_ah/api/storage/v0.01/files?companyId=abc123&folder=images/" );
       } );
     } );
 
@@ -739,25 +751,26 @@
 
       test( "should correctly set _fileUrl for a file in a folder when Rise Cache is running", function() {
         cacheFolder._isCacheRunning = true;
+        cacheFolder._rcVersionNumber = "1.7.2"
         cacheFolder._setFileUrl( folderImage );
         assert.equal( cacheFolder._fileUrl, "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%252Fhome.jpg" );
       } );
 
-      test( "should correctly set _fileUrl for a file in a folder when Rise Cache version 1.7.1 is running ", function() {
+      test( "should correctly set _fileUrl for a file in a folder when Rise Cache version 1.7.4 is running ", function() {
         cacheFolder._isCacheRunning = true;
-        cacheFolder._rcVersionNumber = "1.7.1";
+        cacheFolder._rcVersionNumber = "1.7.4";
         cacheFolder._setFileUrl( folderImage );
-        assert.equal( cacheFolder._fileUrl, "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%2Fhome.jpg" );
+        assert.equal( cacheFolder._fileUrl, "https://storage.googleapis.com/risemedialibrary-abc123/images%2Fhome.jpg" );
       } );
 
-      test( "should correctly set _fileUrl for a file in a folder when Rise Cache version is greater than 1.7.1 is running ", function() {
+      test( "should correctly set _fileUrl for a file in a folder when Rise Cache version is greater than 1.7.4 is running ", function() {
         cacheFolder._isCacheRunning = true;
-        cacheFolder._rcVersionNumber = "1.7.2";
+        cacheFolder._rcVersionNumber = "1.7.5";
         cacheFolder._setFileUrl( folderImage );
-        assert.equal( cacheFolder._fileUrl, "https%3A%2F%2Fstorage.googleapis.com%2Frisemedialibrary-abc123%2Fimages%2Fhome.jpg" );
+        assert.equal( cacheFolder._fileUrl, "https://storage.googleapis.com/risemedialibrary-abc123/images%2Fhome.jpg" );
       } );
 
-      test( "should correctly set _fileUrl for a file in a folder when Rise Cache version is less than 1.7.1 is running ", function() {
+      test( "should correctly set _fileUrl for a file in a folder when Rise Cache version is less than 1.7.4 is running ", function() {
         cacheFolder._isCacheRunning = true;
         cacheFolder._rcVersionNumber = "1.6.0";
         cacheFolder._setFileUrl( folderImage );

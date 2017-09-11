@@ -11334,7 +11334,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
 </dom-module>
 
 <!-- build:version -->
-<script>var storageVersion = "2.0.8";</script>
+<script>var storageVersion = "2.0.9";</script>
 <!-- endbuild -->
 
 <script>
@@ -11719,7 +11719,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
        * @property RC_VERSION_WITH_ENCODE
        * @default "1.7.1"
        */
-      _RC_VERSION_WITH_ENCODE: "1.7.1",
+      _RC_VERSION_WITH_ENCODE: "1.7.3",
 
       /**
        * Count how many times the cache request returned with error
@@ -11926,7 +11926,11 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
           }
 
           if ( this._isCacheRunning ) {
-            url = this._baseCacheUrl + "/metadata/?url=" + encodeURIComponent( url );
+            if ( this._compareVersionNumbers( this._rcVersionNumber, this._RC_VERSION_WITH_ENCODE ) > 0 ) {
+              url = this._baseCacheUrl + "/metadata/?url=" + url;
+            } else {
+              url = this._baseCacheUrl + "/metadata/?url=" + encodeURIComponent( url );
+            }
           }
 
           this.$.storage.url = url;
@@ -12111,11 +12115,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
 
                 if ( self._isLoading ) {
                   // Construct URL.
-                  if ( self._isCacheRunning ) {
-                    file.url = self._baseCacheUrl + "/files/?url=" + encodeURIComponent( item.selfLink + suffix );
-                  } else {
-                    file.url = item.selfLink + suffix + modeSuffix + ( ( self._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW );
-                  }
+                  file.url = item.selfLink + suffix + modeSuffix + ( ( self._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW );
 
                   self._files.push( {
                     "name": self._getFileNameFromUrl( file.url ),
@@ -12126,12 +12126,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
                   file.added = true;
                 } else {
                   // Construct URL.
-                  if ( self._isCacheRunning ) {
-                    file.url = self._baseCacheUrl + "/files" + "?url=" +
-                      encodeURIComponent( item.selfLink + suffix );
-                  } else {
-                    file.url = item.selfLink + suffix + modeSuffix + ( ( self._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW );
-                  }
+                  file.url = item.selfLink + suffix + modeSuffix + ( ( self._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW );
 
                   previousItem = _.find( self._files, function( obj ) {
                     return decodeURIComponent( obj.name ) === item.name;
@@ -12751,7 +12746,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
           filePath = url.substring( endIndex + ( "/o/".length ) );
 
           if ( this._compareVersionNumbers( this._rcVersionNumber, this._RC_VERSION_WITH_ENCODE ) >= 0 ) {
-            this._fileUrl = encodeURIComponent( "https://storage.googleapis.com/" ) + bucket + encodeURIComponent( "/" ) + filePath;
+            this._fileUrl = "https://storage.googleapis.com/" + bucket + "/" + filePath;
           } else {
             this._fileUrl = encodeURIComponent( "https://storage.googleapis.com/" + bucket + "/" + filePath );
           }
