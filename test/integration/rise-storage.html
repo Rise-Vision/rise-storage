@@ -80,12 +80,14 @@
           file.removeEventListener( "rise-storage-response", responseHandler );
         } );
 
-
+        setup( function() {
+          file.displayid = "preview";
+        } );
 
         test( "should return the correct URL for a specific file in a bucket after 24 hours has passed since last check of the subscription status", function( done ) {
           responseHandler = function( response ) {
             assert.equal( response.detail.name, "home.jpg" );
-            assert.equal( response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg?mode=preview" );
+            assert.equal( response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg?mode=preview&displayid=preview" );
             done();
           };
 
@@ -99,7 +101,7 @@
         test( "should return the correct URL for a specific file in a bucket when running in player", function( done ) {
           responseHandler = function( response ) {
             assert.equal( response.detail.name, "home.jpg" );
-            assert.equal( response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg?mode=no-rc" );
+            assert.equal( response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg?mode=no-rc&displayid=def456" );
             done();
           };
 
@@ -111,11 +113,10 @@
         test( "should return the correct URL for a specific file in a bucket when running in preview", function( done ) {
           responseHandler = function( response ) {
             assert.equal( response.detail.name, "home.jpg" );
-            assert.equal( response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg?mode=preview" );
+            assert.equal( response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg?mode=preview&displayid=preview" );
             done();
           };
 
-          file.displayid = "preview";
           file.addEventListener( "rise-storage-response", responseHandler );
           file.go();
         } );
@@ -163,7 +164,7 @@
         test( "should return the correct URL for a specific file in a folder when running in player", function( done ) {
           responseHandler = function( response ) {
             assert.equal( response.detail.name, "images/home.jpg" );
-            assert.equal( response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fimages%2Fhome.jpg?mode=no-rc" );
+            assert.equal( response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fimages%2Fhome.jpg?mode=no-rc&displayid=def456" );
             done();
           };
 
@@ -175,7 +176,7 @@
         test( "should return the correct URL for a specific file in a folder when running in preview", function( done ) {
           responseHandler = function( response ) {
             assert.equal( response.detail.name, "images/home.jpg" );
-            assert.equal( response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fimages%2Fhome.jpg?mode=preview" );
+            assert.equal( response.detail.url, "https://storage.googleapis.com/risemedialibrary-abc123%2Fimages%2Fhome.jpg?mode=preview&displayid=preview" );
             done();
           };
 
@@ -237,9 +238,9 @@
               assert.equal( files[ 0 ].name, "images/home.jpg" );
               assert.equal( files[ 1 ].name, "images/circle.png" );
               assert.equal( files[ 2 ].name, "images/my-image.bmp" );
-              assert.equal( files[ 0 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=no-rc" );
-              assert.equal( files[ 1 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=no-rc" );
-              assert.equal( files[ 2 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media&mode=no-rc" );
+              assert.equal( files[ 0 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=no-rc&displayid=def456" );
+              assert.equal( files[ 1 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=no-rc&displayid=def456" );
+              assert.equal( files[ 2 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media&mode=no-rc&displayid=def456" );
               done();
             }
           };
@@ -261,9 +262,9 @@
               assert.equal( files[ 0 ].name, "images/home.jpg" );
               assert.equal( files[ 1 ].name, "images/circle.png" );
               assert.equal( files[ 2 ].name, "images/my-image.bmp" );
-              assert.equal( files[ 0 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=preview" );
-              assert.equal( files[ 1 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=preview" );
-              assert.equal( files[ 2 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media&mode=preview" );
+              assert.equal( files[ 0 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=preview&displayid=preview" );
+              assert.equal( files[ 1 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=preview&displayid=preview" );
+              assert.equal( files[ 2 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media&mode=preview&displayid=preview" );
               done();
             }
           };
@@ -297,7 +298,7 @@
           responseHandler = function( response ) {
             if ( response.detail.changed ) {
               assert.equal( response.detail.name, "images/circle.png" );
-              assert.equal( response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=preview" );
+              assert.equal( response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=preview&displayid=preview" );
               done();
             }
           };
@@ -317,7 +318,7 @@
 
             if ( response.detail.added && count > 3 ) {
               assert.equal( response.detail.name, "images/golf.svg" );
-              assert.equal( response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media&mode=preview" );
+              assert.equal( response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media&mode=preview&displayid=preview" );
               done();
             }
           };
@@ -339,7 +340,7 @@
           responseHandler = function( response ) {
             if ( response.detail.deleted ) {
               assert.equal( response.detail.name, "images/golf.svg" );
-              assert.equal( response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media&mode=preview" );
+              assert.equal( response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media&mode=preview&displayid=preview" );
               done();
             }
           };
@@ -674,7 +675,7 @@
         test( "should fire rise-storage-file-throttled if bucket file is throttled", function( done ) {
           responseHandler = function( response ) {
             assert.isString( response.detail, "response.detail is a string" );
-            assert.equal( response.detail, bucketImage.files[ 0 ].selfLink + "?alt=media&mode=preview" );
+            assert.equal( response.detail, bucketImage.files[ 0 ].selfLink + "?alt=media&mode=preview&displayid=preview" );
 
             file.removeEventListener( "rise-storage-file-throttled", responseHandler );
 
@@ -691,7 +692,7 @@
         test( "should fire rise-storage-file-throttled if folder file is throttled", function( done ) {
           responseHandler = function( response ) {
             assert.isString( response.detail, "response.detail is a string" );
-            assert.equal( response.detail, folderImage.files[ 0 ].selfLink + "?alt=media&mode=preview" );
+            assert.equal( response.detail, folderImage.files[ 0 ].selfLink + "?alt=media&mode=preview&displayid=preview" );
 
             fileFolder.removeEventListener( "rise-storage-file-throttled", responseHandler );
 
@@ -794,12 +795,13 @@
             if ( files.length === 2 ) {
               assert.equal( files[ 0 ].name, "images/home.jpg" );
               assert.equal( files[ 1 ].name, "images/my-image.bmp" );
-              assert.equal( files[ 0 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=preview" );
-              assert.equal( files[ 1 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media&mode=preview" );
+              assert.equal( files[ 0 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=preview&displayid=preview" );
+              assert.equal( files[ 1 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media&mode=preview&displayid=preview" );
               done();
             }
           };
 
+          contentType.displayid = "preview";
           contentType.addEventListener( "rise-storage-response", responseHandler );
           server.respondWith( [ 200, header, JSON.stringify( mixedMedia ) ] );
           contentType.go();
