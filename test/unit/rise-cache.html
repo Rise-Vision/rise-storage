@@ -39,7 +39,8 @@
       listener,
       clock,
       suffix = "?alt=media",
-      modeSuffix = "&mode=";
+      modeSuffix = "&mode=",
+      displayIdSuffix = "&displayid=";
 
     suiteSetup( function() {
       xhr = sinon.useFakeXMLHttpRequest(); // eslint-disable-line no-global-assign
@@ -781,28 +782,28 @@
         cacheFile._isCacheRunning = false;
         cacheFile.displayid = "def456";
         cacheFile._setFileUrl( bucketImage );
-        assert.equal( cacheFile._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg" + suffix + modeSuffix + "no-rc" );
+        assert.equal( cacheFile._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg" + suffix + modeSuffix + "no-rc" + displayIdSuffix + "def456" );
       } );
 
       test( "should correctly set fileUrl for a file in the root of the bucket when Rise Cache is not running and in preview", function() {
         cacheFile._isCacheRunning = false;
         cacheFile.displayid = "preview";
         cacheFile._setFileUrl( bucketImage );
-        assert.equal( cacheFile._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg" + suffix + modeSuffix + "preview" );
+        assert.equal( cacheFile._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg" + suffix + modeSuffix + "preview" + displayIdSuffix + "preview" );
       } );
 
       test( "should correctly set fileUrl for a file in a folder when Rise Cache is not running and in player", function() {
         cacheFolder._isCacheRunning = false;
         cacheFolder.displayid = "def456";
         cacheFolder._setFileUrl( folderImage );
-        assert.equal( cacheFolder._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg" + suffix + modeSuffix + "no-rc" );
+        assert.equal( cacheFolder._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg" + suffix + modeSuffix + "no-rc" + displayIdSuffix + "def456" );
       } );
 
       test( "should correctly set fileUrl for a file in a folder when Rise Cache is not running and in preview", function() {
         cacheFolder._isCacheRunning = false;
         cacheFolder.displayid = "preview";
         cacheFolder._setFileUrl( folderImage );
-        assert.equal( cacheFolder._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg" + suffix + modeSuffix + "preview" );
+        assert.equal( cacheFolder._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg" + suffix + modeSuffix + "preview" + displayIdSuffix + "preview" );
       } );
     } );
 
