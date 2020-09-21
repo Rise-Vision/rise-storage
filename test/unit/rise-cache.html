@@ -27,12 +27,12 @@
     instances = [ cacheFolder, cacheFile, invalidFolder ],
     i;
 
-  for ( i = 0; i < instances.length; i += 1 ) {
+  /*for ( i = 0; i < instances.length; i += 1 ) {
     // mock logger getting display id from Rise Cache
     sinon.stub( instances[ i ].$.logger.$.displayId, "generateRequest", function() {
       instances[ i ].$.logger._onDisplayIdResponse( null, { response: { displayId: display } } );
     } );
-  }
+  }*/
 
   suite( "rise-storage", function() {
     var responded,
@@ -40,7 +40,9 @@
       clock,
       suffix = "?alt=media",
       modeSuffix = "&mode=",
-      displayIdSuffix = "&displayid=";
+      displayIdSuffix = "&displayid=",
+      endpointSuffix = "&env=",
+      viewerIdSuffix = "&viewerId=";
 
     suiteSetup( function() {
       xhr = sinon.useFakeXMLHttpRequest(); // eslint-disable-line no-global-assign
@@ -789,7 +791,7 @@
         cacheFile._isCacheRunning = false;
         cacheFile.displayid = "preview";
         cacheFile._setFileUrl( bucketImage );
-        assert.equal( cacheFile._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg" + suffix + modeSuffix + "preview" + displayIdSuffix + "preview" );
+        assert.equal( cacheFile._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg" + suffix + modeSuffix + "preview" + endpointSuffix + viewerIdSuffix + displayIdSuffix + "preview" );
       } );
 
       test( "should correctly set fileUrl for a file in a folder when Rise Cache is not running and in player", function() {
@@ -803,7 +805,7 @@
         cacheFolder._isCacheRunning = false;
         cacheFolder.displayid = "preview";
         cacheFolder._setFileUrl( folderImage );
-        assert.equal( cacheFolder._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg" + suffix + modeSuffix + "preview" + displayIdSuffix + "preview" );
+        assert.equal( cacheFolder._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg" + suffix + modeSuffix + "preview" + endpointSuffix + viewerIdSuffix + displayIdSuffix + "preview" );
       } );
     } );
 
