@@ -39,7 +39,7 @@
   } );
 
   gulp.task( "lint", () => {
-    return gulp.src( [ "./**/*.js", "./**/*.html" ] )
+    return gulp.src("./*.html")
       .pipe( eslint() )
       .pipe( eslint.format() )
       .pipe( eslint.failAfterError() );
