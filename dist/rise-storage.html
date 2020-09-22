@@ -465,6 +465,9 @@ Polymer.telemetry.instanceCount = 0;
 }());(function () {
 var modules = {};
 var lcModules = {};
+function setModule(id, module) {
+modules[id] = lcModules[id.toLowerCase()] = module;
+}
 var findModule = function (id) {
 return modules[id] || lcModules[id.toLowerCase()];
 };
@@ -479,9 +482,12 @@ this.register();
 register: function (id) {
 id = id || this.id || this.getAttribute('name') || this.getAttribute('is');
 if (id) {
+if (Polymer.Settings.strictTemplatePolicy && findModule(id) !== undefined) {
+setModule(id, null);
+throw new Error('strictTemplatePolicy: dom-module ' + id + ' re-registered');
+}
 this.id = id;
-modules[id] = this;
-lcModules[id.toLowerCase()] = this;
+setModule(id, this);
 }
 },
 import: function (id, selector) {
@@ -848,7 +854,7 @@ default:
 return value != null ? value : undefined;
 }
 }
-});Polymer.version = "1.11.2";Polymer.Base._addFeature({
+});Polymer.version = "1.12.0";Polymer.Base._addFeature({
 _registerFeatures: function () {
 this._prepIs();
 this._prepBehaviors();
@@ -945,7 +951,11 @@ _prepTemplate: function () {
 var module;
 if (this._template === undefined) {
 module = Polymer.DomModule.import(this.is);
-this._template = module && module.querySelector('template');
+var template = module && module.querySelector('template');
+if (Polymer.Settings.strictTemplatePolicy && !template) {
+throw new Error('strictTemplatePolicy: expecting dom-module or null _template for ' + this.is);
+}
+this._template = template;
 }
 if (module) {
 var assetPath = module.getAttribute('assetpath') || '';
@@ -1911,10 +1921,20 @@ this.removeChild(this.childNodes[0]);
 },
 setAttribute: function (name, value) {
 this.node.setAttribute(name, value);
-this._maybeDistributeParent();
+this._maybeDistributeForAttributeChange(this.node, name);
 },
 removeAttribute: function (name) {
 this.node.removeAttribute(name);
+this._maybeDistributeForAttributeChange(this.node, name);
+},
+_maybeDistributeForAttributeChange: function (element, name) {
+if (name === 'select' && element.localName === 'content') {
+var ownerRoot = this.getOwnerRoot();
+if (ownerRoot && this._nodeNeedsDistribution(ownerRoot.host)) {
+this._lazyDistribute(ownerRoot.host);
+return;
+}
+}
 this._maybeDistributeParent();
 },
 _maybeDistributeParent: function () {
@@ -2469,7 +2489,7 @@ return h;
 _unobserveContentElements: function (elements) {
 for (var i = 0, n, h; i < elements.length && (n = elements[i]); i++) {
 if (this._isContent(n)) {
-h = n.__observeNodesMap.get(this);
+h = n.__observeNodesMap && n.__observeNodesMap.get(this);
 if (h) {
 Polymer.dom(n).unobserveNodes(h);
 n.__observeNodesMap.delete(this);
@@ -3262,6 +3282,11 @@ i++;
 }
 }
 },
+_select$Attr: function () {
+var div = document.createElement('div');
+div.innerHTML = '<div select$>';
+return div.childNodes[0].attributes.getNamedItem('select$');
+}(),
 _replaceSlotWithContent: function (slot) {
 var content = slot.ownerDocument.createElement('content');
 while (slot.firstChild) {
@@ -3269,12 +3294,17 @@ content.appendChild(slot.firstChild);
 }
 var attrs = slot.attributes;
 for (var i = 0; i < attrs.length; i++) {
-var attr = attrs[i];
-content.setAttribute(attr.name, attr.value);
+content.attributes.setNamedItem(attrs[i].cloneNode());
 }
 var name = slot.getAttribute('name');
 if (name) {
 content.setAttribute('select', '[slot=\'' + name + '\']');
+}
+var name$Value = slot.getAttribute('name$');
+if (name$Value) {
+var select$Attr = this._select$Attr.cloneNode();
+select$Attr.value = '[slot=\'' + name$Value + '\']';
+content.attributes.setNamedItem(select$Attr);
 }
 slot.parentNode.replaceChild(content, slot);
 return content;
@@ -3479,7 +3509,7 @@ this._marshalAnnotatedListeners();
 }
 },
 _configureAnnotationReferences: function () {
-var notes = this._notes;
+var notes = this._notes || [];
 var nodes = this._nodes;
 for (var i = 0; i < notes.length; i++) {
 var note = notes[i];
@@ -3689,9 +3719,11 @@ return;
 mouseEvent[HANDLED_OBJ] = { skip: true };
 if (mouseEvent.type === 'click') {
 var path = Polymer.dom(mouseEvent).path;
+if (path) {
 for (var i = 0; i < path.length; i++) {
 if (path[i] === POINTERSTATE.mouse.target) {
 return;
+}
 }
 }
 mouseEvent.preventDefault();
@@ -3793,7 +3825,11 @@ deepTargetFind: function (x, y) {
 var node = document.elementFromPoint(x, y);
 var next = node;
 while (next && next.shadowRoot) {
+var oldNext = next;
 next = next.shadowRoot.elementFromPoint(x, y);
+if (oldNext === next) {
+break;
+}
 if (next) {
 node = next;
 }
@@ -6879,7 +6915,7 @@ return cssText.replace(keyframesRule.keyframesNameRx, keyframesRule.transformedK
 };
 },
 _scopeKeyframes: function (rule, scopeId) {
-rule.keyframesNameRx = new RegExp(rule.keyframesName, 'g');
+rule.keyframesNameRx = new RegExp('\\b' + rule.keyframesName + '(?!\\B|-)', 'g');
 rule.transformedKeyframesName = rule.keyframesName + '-' + scopeId;
 rule.transformedSelector = rule.transformedSelector || rule.selector;
 rule.selector = rule.transformedSelector.replace(rule.keyframesName, rule.transformedKeyframesName);
@@ -7444,6 +7480,9 @@ properties: { __hideTemplateChildren__: { observer: '_showHideChildren' } },
 _instanceProps: Polymer.nob,
 _parentPropPrefix: '_parent_',
 templatize: function (template) {
+if (Polymer.Settings.strictTemplatePolicy && !this._getRootDataHost()) {
+throw new Error('strictTemplatePolicy: template owner not trusted');
+}
 this._templatized = template;
 if (!template._content) {
 template._content = template.content;
@@ -7525,8 +7564,8 @@ archetype._addPropertyEffect(prop, 'function', this._createInstancePropEffector(
 }
 },
 _customPrepAnnotations: function (archetype, template) {
-archetype._template = template;
-var c = template._content;
+var t = archetype._template = document.createElement('template');
+var c = t._content = template._content;
 if (!c._notes) {
 var rootDataHost = archetype._rootDataHost;
 if (rootDataHost) {
@@ -8043,6 +8082,9 @@ this._debounceTemplate(this._render);
 this._flushTemplates();
 },
 _render: function () {
+if (!this.ctor) {
+return;
+}
 if (this._needFullRefresh) {
 this._applyFullRefresh();
 this._needFullRefresh = false;
@@ -8524,8 +8566,10 @@ if (this._instance) {
 var c$ = this._instance._children;
 if (c$ && c$.length) {
 var parent = Polymer.dom(Polymer.dom(c$[0]).parentNode);
+if (parent) {
 for (var i = 0, n; i < c$.length && (n = c$[i]); i++) {
 parent.removeChild(n);
+}
 }
 }
 this._instance = null;
@@ -8553,6 +8597,9 @@ properties: { notifyDomChange: { type: Boolean } },
 extends: 'template',
 _template: null,
 created: function () {
+if (Polymer.Settings.strictTemplatePolicy) {
+throw new Error('strictTemplatePolicy: dom-bind not allowed');
+}
 var self = this;
 Polymer.RenderStatus.whenReady(function () {
 if (document.readyState == 'loading') {
@@ -11755,7 +11802,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
 </dom-module>
 
 <!-- build:version -->
-<script>var storageVersion = "2.1.0";</script>
+<script>var storageVersion = "2.2.0";</script>
 <!-- endbuild -->
 
 <script>
@@ -11854,6 +11901,14 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
         env: {
           type: String,
           value: "prod"
+        },
+        endpointtype: {
+          type: String,
+          value: ""
+        },
+        viewerid: {
+          type: String,
+          value: ""
         }
       },
 
@@ -12498,6 +12553,8 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
           suffix = "?alt=media",
           modeSuffix = "&mode=",
           displayIdSuffix = "&displayid=" + this.displayid,
+          endpointSuffix = "&env=" + this.endpointtype,
+          viewerIdSuffix = "&viewerId=" + this.viewerid,
           filesFiltered = 0,
           totalFiles = 0;
 
@@ -12536,7 +12593,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
                 }
 
                 // Construct URL.
-                file.url = item.selfLink + suffix + modeSuffix + ( ( self._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW ) + displayIdSuffix;
+                file.url = item.selfLink + suffix + modeSuffix + ( ( self._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + endpointSuffix + viewerIdSuffix ) + displayIdSuffix;
 
                 if ( self._isLoading ) {
                   self._files.push( {
@@ -13058,7 +13115,9 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
 
       _getSingleFileURL: function() {
         var displayIdSuffix = "&displayid=" + this.displayid,
-          suffix = ( !this._isCacheRunning ) ? "?mode=" + ( ( this._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW ) + displayIdSuffix : "";
+          endpointSuffix = "&env=" + this.endpointtype,
+          viewerIdSuffix = "&viewerId=" + this.viewerid,
+          suffix = ( !this._isCacheRunning ) ? "?mode=" + ( ( this._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + endpointSuffix + viewerIdSuffix ) + displayIdSuffix : "";
 
         return "https://storage.googleapis.com/" + encodeURIComponent( this._getStoragePath() ) + suffix;
       },
@@ -13148,7 +13207,9 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
           endIndex = -1,
           suffix = "?alt=media",
           modeSuffix = "&mode=",
-          displayIdSuffix = "&displayid=" + this.displayid;
+          displayIdSuffix = "&displayid=" + this.displayid,
+          endpointSuffix = "&env=" + this.endpointtype,
+          viewerIdSuffix = "&viewerId=" + this.viewerid;
 
         // File in the root of the bucket.
         if ( response.selfLink ) {
@@ -13173,7 +13234,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
           }
 
         } else {
-          this._fileUrl = url + suffix + modeSuffix + ( ( this._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW ) + displayIdSuffix;
+          this._fileUrl = url + suffix + modeSuffix + ( ( this._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + endpointSuffix + viewerIdSuffix ) + displayIdSuffix;
         }
       },
 

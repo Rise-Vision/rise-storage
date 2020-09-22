@@ -36,12 +36,12 @@
       instances = [ noCompany, bucket, folder, invalidFolder, folderTesting, fileFolder, fileBucket, contentType ],
       i;
 
-    for ( i = 0; i < instances.length; i += 1 ) {
+    /*for ( i = 0; i < instances.length; i += 1 ) {
       // mock logger getting display id from Rise Cache
       sinon.stub( instances[ i ].$.logger.$.displayId, "generateRequest", function() {
         instances[ i ].$.logger._onDisplayIdResponse( null, { response: { displayId: display } } );
       } );
-    }
+    }*/
 
     suite( "rise-storage", function() {
       var responded,
@@ -474,9 +474,9 @@
               assert.equal( files[ 0 ].name, "images/home.jpg" );
               assert.equal( files[ 1 ].name, "images/circle.png" );
               assert.equal( files[ 2 ].name, "images/my-image.bmp" );
-              assert.equal( files[ 0 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=preview&displayid=preview" );
-              assert.equal( files[ 1 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=preview&displayid=preview" );
-              assert.equal( files[ 2 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media&mode=preview&displayid=preview" );
+              assert.equal( files[ 0 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=preview&env=&viewerId=&displayid=preview" );
+              assert.equal( files[ 1 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=preview&env=&viewerId=&displayid=preview" );
+              assert.equal( files[ 2 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media&mode=preview&env=&viewerId=&displayid=preview" );
             }
           };
 
@@ -499,9 +499,9 @@
               assert.equal( files[ 0 ].name, "images/home.jpg" );
               assert.equal( files[ 1 ].name, "images/circle.png" );
               assert.equal( files[ 2 ].name, "images/my-image.bmp" );
-              assert.equal( files[ 0 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=preview&displayid=preview" );
-              assert.equal( files[ 1 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=preview&displayid=preview" );
-              assert.equal( files[ 2 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media&mode=preview&displayid=preview" );
+              assert.equal( files[ 0 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg?alt=media&mode=preview&env=&viewerId=&displayid=preview" );
+              assert.equal( files[ 1 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=preview&env=&viewerId=&displayid=preview" );
+              assert.equal( files[ 2 ].url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fmy-image.bmp?alt=media&mode=preview&env=&viewerId=&displayid=preview" );
             }
           };
 
@@ -517,7 +517,7 @@
             if ( response.detail.changed ) {
               responded = true;
               assert.equal( response.detail.name, "images/circle.png" );
-              assert.equal( response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=preview&displayid=preview" );
+              assert.equal( response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fcircle.png?alt=media&mode=preview&env=&viewerId=&displayid=preview" );
             }
           };
 
@@ -534,7 +534,7 @@
             if ( response.detail.added ) {
               responded = true;
               assert.equal( response.detail.name, "images/golf.svg" );
-              assert.equal( response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media&mode=preview&displayid=preview" );
+              assert.equal( response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media&mode=preview&env=&viewerId=&displayid=preview" );
             }
           };
 
@@ -558,7 +558,7 @@
             if ( response.detail.deleted ) {
               responded = true;
               assert.equal( response.detail.name, "images/golf.svg" );
-              assert.equal( response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media&mode=preview&displayid=preview" );
+              assert.equal( response.detail.url, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fgolf.svg?alt=media&mode=preview&env=&viewerId=&displayid=preview" );
             }
           };
 
@@ -720,7 +720,7 @@
 
         test( "should return the storage url of the file in a bucket running in preview", function() {
           fileBucket.displayid = "preview";
-          assert.equal( fileBucket._getSingleFileURL(), "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg?mode=preview&displayid=preview" );
+          assert.equal( fileBucket._getSingleFileURL(), "https://storage.googleapis.com/risemedialibrary-abc123%2Fhome.jpg?mode=preview&env=&viewerId=&displayid=preview" );
         } );
 
         test( "should return the storage url of the file in a folder running in player", function() {
@@ -730,7 +730,7 @@
 
         test( "should return the storage url of the file in a folder running in preview", function() {
           fileFolder.displayid = "preview";
-          assert.equal( fileFolder._getSingleFileURL(), "https://storage.googleapis.com/risemedialibrary-abc123%2Fimages%2Fhome.jpg?mode=preview&displayid=preview" );
+          assert.equal( fileFolder._getSingleFileURL(), "https://storage.googleapis.com/risemedialibrary-abc123%2Fimages%2Fhome.jpg?mode=preview&env=&viewerId=&displayid=preview" );
         } );
 
       } );

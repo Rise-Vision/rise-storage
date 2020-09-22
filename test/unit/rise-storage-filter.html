@@ -28,12 +28,12 @@
       instances = [ fileBucket, contentType, imageFileType, videoFileType ],
       i;
 
-    for ( i = 0; i < instances.length; i += 1 ) {
+    /*for ( i = 0; i < instances.length; i += 1 ) {
       // mock logger getting display id from Rise Cache
       sinon.stub( instances[ i ].$.logger.$.displayId, "generateRequest", function() {
         instances[ i ].$.logger._onDisplayIdResponse( null, { response: { displayId: display } } );
       } );
-    }
+    }*/
 
     suite( "rise-storage", function() {
 

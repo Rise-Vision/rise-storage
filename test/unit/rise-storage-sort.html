@@ -21,9 +21,9 @@
       display = "abc123";
 
     // mock logger getting display id from Rise Cache
-    sinon.stub( folder.$.logger.$.displayId, "generateRequest", function() {
+    /*sinon.stub( folder.$.logger.$.displayId, "generateRequest", function() {
       folder.$.logger._onDisplayIdResponse( null, { response: { displayId: display } } );
-    } );
+    } );*/
 
     suite( "_sortFiles", function() {
       /* eslint-disable indent */
