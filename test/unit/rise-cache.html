@@ -41,8 +41,7 @@
       suffix = "?alt=media",
       modeSuffix = "&mode=",
       displayIdSuffix = "&displayid=",
-      endpointSuffix = "&env=",
-      viewerIdSuffix = "&viewerId=";
+      viewerParamsSuffix = "&viewerEnv=&viewerId=&viewerType=";
 
     suiteSetup( function() {
       xhr = sinon.useFakeXMLHttpRequest(); // eslint-disable-line no-global-assign
@@ -791,7 +790,7 @@
         cacheFile._isCacheRunning = false;
         cacheFile.displayid = "preview";
         cacheFile._setFileUrl( bucketImage );
-        assert.equal( cacheFile._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg" + suffix + modeSuffix + "preview" + endpointSuffix + viewerIdSuffix + displayIdSuffix + "preview" );
+        assert.equal( cacheFile._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/home.jpg" + suffix + modeSuffix + "preview" + viewerParamsSuffix + displayIdSuffix + "preview" );
       } );
 
       test( "should correctly set fileUrl for a file in a folder when Rise Cache is not running and in player", function() {
@@ -805,7 +804,7 @@
         cacheFolder._isCacheRunning = false;
         cacheFolder.displayid = "preview";
         cacheFolder._setFileUrl( folderImage );
-        assert.equal( cacheFolder._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg" + suffix + modeSuffix + "preview" + endpointSuffix + viewerIdSuffix + displayIdSuffix + "preview" );
+        assert.equal( cacheFolder._fileUrl, "https://www.googleapis.com/storage/v1/b/risemedialibrary-abc123/o/images%2Fhome.jpg" + suffix + modeSuffix + "preview" + viewerParamsSuffix + displayIdSuffix + "preview" );
       } );
     } );
 
