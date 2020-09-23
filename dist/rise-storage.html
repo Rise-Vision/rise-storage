@@ -11802,7 +11802,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
 </dom-module>
 
 <!-- build:version -->
-<script>var storageVersion = "2.2.0";</script>
+<script>var storageVersion = "2.2.1";</script>
 <!-- endbuild -->
 
 <script>
@@ -11902,11 +11902,15 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
           type: String,
           value: "prod"
         },
-        endpointtype: {
+        viewerenv: {
           type: String,
           value: ""
         },
         viewerid: {
+          type: String,
+          value: ""
+        },
+        viewertype: {
           type: String,
           value: ""
         }
@@ -12553,8 +12557,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
           suffix = "?alt=media",
           modeSuffix = "&mode=",
           displayIdSuffix = "&displayid=" + this.displayid,
-          endpointSuffix = "&env=" + this.endpointtype,
-          viewerIdSuffix = "&viewerId=" + this.viewerid,
+          viewerParamsSuffix = "&viewerEnv=" + this.viewerenv + "&viewerId=" + this.viewerid + "&viewerType=" + this.viewertype,
           filesFiltered = 0,
           totalFiles = 0;
 
@@ -12593,7 +12596,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
                 }
 
                 // Construct URL.
-                file.url = item.selfLink + suffix + modeSuffix + ( ( self._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + endpointSuffix + viewerIdSuffix ) + displayIdSuffix;
+                file.url = item.selfLink + suffix + modeSuffix + ( ( self._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + viewerParamsSuffix ) + displayIdSuffix;
 
                 if ( self._isLoading ) {
                   self._files.push( {
@@ -13115,9 +13118,8 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
 
       _getSingleFileURL: function() {
         var displayIdSuffix = "&displayid=" + this.displayid,
-          endpointSuffix = "&env=" + this.endpointtype,
-          viewerIdSuffix = "&viewerId=" + this.viewerid,
-          suffix = ( !this._isCacheRunning ) ? "?mode=" + ( ( this._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + endpointSuffix + viewerIdSuffix ) + displayIdSuffix : "";
+          viewerParamsSuffix = "&viewerEnv=" + this.viewerenv + "&viewerId=" + this.viewerid + "&viewerType=" + this.viewertype,
+          suffix = ( !this._isCacheRunning ) ? "?mode=" + ( ( this._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + viewerParamsSuffix ) + displayIdSuffix : "";
 
         return "https://storage.googleapis.com/" + encodeURIComponent( this._getStoragePath() ) + suffix;
       },
@@ -13208,8 +13210,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
           suffix = "?alt=media",
           modeSuffix = "&mode=",
           displayIdSuffix = "&displayid=" + this.displayid,
-          endpointSuffix = "&env=" + this.endpointtype,
-          viewerIdSuffix = "&viewerId=" + this.viewerid;
+          viewerParamsSuffix = "&viewerEnv=" + this.viewerenv + "&viewerId=" + this.viewerid + "&viewerType=" + this.viewertype;
 
         // File in the root of the bucket.
         if ( response.selfLink ) {
@@ -13234,7 +13235,7 @@ The following illustrates how to use `rise-logger` within a parent Rise Vision w
           }
 
         } else {
-          this._fileUrl = url + suffix + modeSuffix + ( ( this._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + endpointSuffix + viewerIdSuffix ) + displayIdSuffix;
+          this._fileUrl = url + suffix + modeSuffix + ( ( this._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + viewerParamsSuffix ) + displayIdSuffix;
         }
       },
 

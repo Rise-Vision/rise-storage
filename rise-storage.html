@@ -77,7 +77,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
 </dom-module>
 
 <!-- build:version -->
-<script>var storageVersion = "2.2.0";</script>
+<script>var storageVersion = "2.2.1";</script>
 <!-- endbuild -->
 
 <script>
@@ -177,11 +177,15 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
           type: String,
           value: "prod"
         },
-        endpointtype: {
+        viewerenv: {
           type: String,
           value: ""
         },
         viewerid: {
+          type: String,
+          value: ""
+        },
+        viewertype: {
           type: String,
           value: ""
         }
@@ -828,8 +832,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
           suffix = "?alt=media",
           modeSuffix = "&mode=",
           displayIdSuffix = "&displayid=" + this.displayid,
-          endpointSuffix = "&env=" + this.endpointtype,
-          viewerIdSuffix = "&viewerId=" + this.viewerid,
+          viewerParamsSuffix = "&viewerEnv=" + this.viewerenv + "&viewerId=" + this.viewerid + "&viewerType=" + this.viewertype,
           filesFiltered = 0,
           totalFiles = 0;
 
@@ -868,7 +871,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
                 }
 
                 // Construct URL.
-                file.url = item.selfLink + suffix + modeSuffix + ( ( self._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + endpointSuffix + viewerIdSuffix ) + displayIdSuffix;
+                file.url = item.selfLink + suffix + modeSuffix + ( ( self._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + viewerParamsSuffix ) + displayIdSuffix;
 
                 if ( self._isLoading ) {
                   self._files.push( {
@@ -1390,9 +1393,8 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
 
       _getSingleFileURL: function() {
         var displayIdSuffix = "&displayid=" + this.displayid,
-          endpointSuffix = "&env=" + this.endpointtype,
-          viewerIdSuffix = "&viewerId=" + this.viewerid,
-          suffix = ( !this._isCacheRunning ) ? "?mode=" + ( ( this._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + endpointSuffix + viewerIdSuffix ) + displayIdSuffix : "";
+          viewerParamsSuffix = "&viewerEnv=" + this.viewerenv + "&viewerId=" + this.viewerid + "&viewerType=" + this.viewertype,
+          suffix = ( !this._isCacheRunning ) ? "?mode=" + ( ( this._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + viewerParamsSuffix ) + displayIdSuffix : "";
 
         return "https://storage.googleapis.com/" + encodeURIComponent( this._getStoragePath() ) + suffix;
       },
@@ -1483,8 +1485,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
           suffix = "?alt=media",
           modeSuffix = "&mode=",
           displayIdSuffix = "&displayid=" + this.displayid,
-          endpointSuffix = "&env=" + this.endpointtype,
-          viewerIdSuffix = "&viewerId=" + this.viewerid;
+          viewerParamsSuffix = "&viewerEnv=" + this.viewerenv + "&viewerId=" + this.viewerid + "&viewerType=" + this.viewertype;
 
         // File in the root of the bucket.
         if ( response.selfLink ) {
@@ -1509,7 +1510,7 @@ To specify a direction, the `sortDirection` attribute should be used. `sortDirec
           }
 
         } else {
-          this._fileUrl = url + suffix + modeSuffix + ( ( this._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + endpointSuffix + viewerIdSuffix ) + displayIdSuffix;
+          this._fileUrl = url + suffix + modeSuffix + ( ( this._isPlayerRunning() ) ? MODE_PLAYER : MODE_PREVIEW + viewerParamsSuffix ) + displayIdSuffix;
         }
       },
 
